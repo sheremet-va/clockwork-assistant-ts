@@ -1,0 +1,43 @@
+{
+    "name": "clockwork-assistant",
+    "version": "3.0.0",
+    "description": "A Discord Bot for ESO guilds.",
+    "scripts": {
+        "start": "npm run build && node dist/index.js",
+        "start:watch": "nodemon",
+        "build": "rimraf ./dist && tsc"
+    },
+    "dependencies": {
+        "@types/moment-duration-format": "^2.2.2",
+        "@types/moment-timezone": "^0.5.13",
+        "@typescript-eslint/eslint-plugin": "^2.30.0",
+        "@typescript-eslint/parser": "^2.30.0",
+        "axios": "^0.19.2",
+        "discord.js": "^12.0.1",
+        "eslint": "^6.8.0",
+        "fastify": "^2.12.1",
+        "moment": "^2.24.0",
+        "moment-duration-format": "^2.3.2",
+        "moment-timezone": "^0.5.28",
+        "rimraf": "^3.0.2",
+        "ts-node": "^8.8.2",
+        "typescript": "^3.8.3"
+    },
+    "devDependencies": {
+        "@types/node": "^13.11.0"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/MNekrasov/clockwork-assistant.git"
+    },
+    "keywords": [
+        "discord",
+        "bot"
+    ],
+    "author": "async#0001",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/MNekrasov/clockwork-assistant/issues"
+    },
+    "homepage": "https://github.com/MNekrasov/clockwork-assistant#readme"
+}
