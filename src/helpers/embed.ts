@@ -59,7 +59,7 @@ class Embed extends MessageEmbed {
             subscriptions: 0x5BA0DD,
             weekly: 0xC6524A,
             drops: 0x7F61C3,
-            news: 0x4D4D4D,
+            news: 0x02B0F4,
             translate: 0x958C78,
             success: 0x77B255,
             error: 0xDD2E44

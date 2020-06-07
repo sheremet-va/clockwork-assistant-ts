@@ -54,7 +54,7 @@ function urlMask(
     const title = build(mask, lang);
 
     const base_url = 'https://eso-sets.com/set/';
-    const mask_url = mask.en.replace(/\s/g, '-').toLowerCase();
+    const mask_url = (mask.en).replace(/\s/g, '-').toLowerCase();
 
     return `[${title}](${base_url + mask_url})`;
 }

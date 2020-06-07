@@ -7,7 +7,7 @@ export default class extends Subscriptions {
         super(client, info, 'luxury');
     }
 
-    notify(): void {
+    async notify(): Promise<void> {
         this.send((settings: Settings) => luxury.embed(this, settings));
     }
 }

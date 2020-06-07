@@ -9,7 +9,7 @@ export default class extends Subscriptions {
         super(client, info, 'weekly');
     }
 
-    notify(): void {
+    async notify(): Promise<void> {
         this.send(settings => weekly.embed(this, settings));
     }
 }

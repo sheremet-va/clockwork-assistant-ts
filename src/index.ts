@@ -46,37 +46,37 @@ const init = async (): Promise<void> => {
 
     client.generateLevelCache();
 
-    // const subsPath = Path.resolve(__dirname, 'subscriptions');
-    // const subscriptionNames = await readdir(subsPath);
+    const subsPath = Path.resolve(__dirname, 'subscriptions');
+    const subscriptionNames = await readdir(subsPath);
 
-    // client.logger.log(`Launching ${subscriptionNames.length} subscriptions.`);
+    client.logger.log(`Launching ${subscriptionNames.length} subscriptions.`);
 
-    // const subsPromises = subscriptionNames.map(async file => {
-    //     if (!file.endsWith('.ts') && !file.endsWith('.js')) { // .js
-    //         return;
-    //     }
+    const subsPromises = subscriptionNames.map(async file => {
+        if (!file.endsWith('.ts') && !file.endsWith('.js')) { // .js
+            return;
+        }
 
-    //     const path = `./subscriptions/${file}`;
-    //     const moduleName = file.replace(/\.ts|\.js/, '');
-    //     const botModule = (await import(path)).default;
-    //     const names = botModule.names || [moduleName];
+        const path = `./subscriptions/${file}`;
+        const moduleName = file.replace(/\.ts|\.js/, '');
+        const botModule = (await import(path)).default;
+        const names = botModule.names || [moduleName];
 
-    //     return {
-    //         name: moduleName,
-    //         controller: botModule,
-    //         names
-    //     };
-    // });
+        return {
+            name: moduleName,
+            controller: botModule,
+            names
+        };
+    });
 
-    // const subscriptions = await Promise.all(subsPromises)
-    //     .then(subs => subs.filter(notUndefined))
-    //     .catch(err => {
-    //         client.logger.error(err);
+    const subscriptions = await Promise.all(subsPromises)
+        .then(subs => subs.filter(notUndefined))
+        .catch(err => {
+            client.logger.error(err);
 
-    //         process.exit(1);
-    //     });
+            process.exit(1);
+        });
 
-    // Subscriptions.init(client, subscriptions);
+    Subscriptions.init(client, subscriptions);
 
     client.login(client.config.token);
 };

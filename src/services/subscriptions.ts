@@ -87,6 +87,8 @@ async function post(
         settings
     } = request.body;
 
+    console.dir(request.body, {depth: null});
+
     if (!subscribers || !Object.keys(subscribers).length) {
         throw new Error('No subscribers recieved.');
     }
@@ -115,11 +117,8 @@ function init(
 
     subscriptions.forEach(({ controller, names }) =>
         names.forEach(name =>
-            app.post('/subscriptions/' + name, async (request, reply) => {
-                client.logger.log(
-                    `Получен POST-запрос на /${name}`,
-                    'req'
-                );
+            app.post('/subscriptions/' + name, async (request, _reply) => {
+                client.logger.log(`Получен POST-запрос на /${name}`);
 
                 try {
                     return await post(client, request, controller, name);
@@ -127,7 +126,7 @@ function init(
                     console.log(e);
                     client.logger.error(e.message);
 
-                    reply.code(500); // hmmm
+                    // reply.code(500); // hmmm
 
                     return { status: 'fail' };
                 }

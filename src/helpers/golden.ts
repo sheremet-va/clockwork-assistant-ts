@@ -3,13 +3,18 @@ import { Embed } from '../helpers/embed';
 import { RequestInfo } from '../types';
 
 import * as moment from 'moment-timezone';
+import * as Intl from 'intl';
 
-import { translate } from './utils';
+import * as utils from './utils';
+import { Item } from './pledges';
 
 declare type GoldenItem = {
-    name: string;
-    price: string;
-    trait: string;
+    name: Item;
+    price: {
+        gold: number;
+        ap: number;
+    };
+    trait: Item[];
     canSell: boolean;
     hasTypes: boolean;
 }
@@ -23,13 +28,27 @@ declare interface GoldenInfo {
 
 function build(
     items: GoldenItem[],
-    { language, has_types }: { language: string; has_types: string | Record<string, string> }
+    { language, merchantsLang, has_types }: {
+        language: string;
+        has_types: string | Record<string, string>;
+        merchantsLang: string;
+    }
 ): string {
     return items.map(({ name, price, canSell, hasTypes, trait }) => {
+        const isRu = merchantsLang.includes('ru');
         const canSellString = canSell ? '__' : '';
-        const hasTypesString = hasTypes ? ` (${translate(has_types, language)}` : '';
+        const hasTypesString = hasTypes ? ` - _${utils.translate(has_types, language)}_` : '';
+        const title = utils.build(name, merchantsLang, '**{{ first }}** - _{{ second }}_');
 
-        return `• **${canSellString}${name}${canSellString} (${translate(trait, language)}${hasTypesString})**: ${price}`;
+        const traits = trait.map(traitName => utils.build(traitName, merchantsLang)).join(' / ');
+        const cost = [
+            new Intl.NumberFormat(isRu ? 'ru-RU' : 'en-US').format(price.gold) + ' g.',
+            new Intl.NumberFormat(isRu ? 'ru-RU' : 'en-US').format(price.ap) + ' AP'
+        ].join(' / ');
+
+        const strong = title.includes('**') ? '' : '**';
+
+        return `• ${strong}${canSellString}${title}${canSellString}${strong} (${traits}${hasTypesString}): ${cost}`;
     }).join('\n');
 }
 
@@ -41,19 +60,19 @@ function embed({ translations, data }: RequestInfo, settings: Settings): Embed {
         has_types
     } = translations;
 
-    const { language, timezone } = settings;
+    const { language, timezone, merchantsLang } = settings;
     const { items, link, date } = data as GoldenInfo;
 
-    const description = build(items, { language, has_types });
+    const description = build(items, { language, merchantsLang, has_types });
 
     const tz_date = moment(date).tz(timezone).locale(language).format('L');
 
     return new Embed({
-        title: translate(title, language).render({ date: tz_date }),
-        description: description + `\n_${translate(can_sell, language)}_`,
+        title: utils.translate(title, language).render({ date: tz_date }),
+        description: description + `\n_${utils.translate(can_sell, language)}_`,
         color: 'golden',
         image: 'golden',
-        footer: translate(provided, language),
+        footer: utils.translate(provided, language),
         url: link
     });
 }

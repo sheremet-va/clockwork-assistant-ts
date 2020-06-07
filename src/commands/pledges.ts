@@ -19,8 +19,6 @@ const run = async (
 
     const { translations, data } = await client.request(path, channel, '1.0');
 
-    console.dir({ translations, data }, { depth: null });
-
     const tomorrow = `${days}` === '0'
         ? await client.request(tPath, null, '1.0')
         : null;

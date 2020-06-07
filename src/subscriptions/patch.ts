@@ -9,7 +9,7 @@ export default class extends Subscriptions {
         super(client, info, 'patch');
     }
 
-    notify(): void {
+    async notify(): Promise<void> {
         this.send(settings => patch.embed(this, settings.language));
     }
 }

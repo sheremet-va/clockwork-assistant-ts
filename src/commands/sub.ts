@@ -13,6 +13,7 @@ const run = async (
     [name]: [string | undefined]
 ): Promise<string | Message> => { // eslint-disable-line no-unused-vars
     if(!name) {
+        // TODO show all subs
         return 'subs';
     }
 

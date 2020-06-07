@@ -14,7 +14,7 @@ declare interface Subscribers {
 }
 
 interface User {
-    subscriptions: string[];
+    channels: string[];
     settings: Settings;
 }
 
@@ -25,6 +25,8 @@ export declare interface Settings {
     timezone: string;
     pledgesLang: string;
     luxuryLang: string;
+    merchantsLang: string;
+    newsLang: language;
 }
 
 // ADD NEW
@@ -95,7 +97,7 @@ class Subscriptions {
                 };
 
                 const channels = subscribers[guild.id]
-                    .subscriptions
+                    .channels
                     .map(id => {
                         const channel = guild.channels.cache.get(`${id}`);
 
@@ -125,6 +127,12 @@ class Subscriptions {
                 return total;
             }
 
+            const { footer, name } = this.translations;
+
+            const subName = `[${name[settings.language]}]`;
+
+            message.setTimestamp().setFooter(`${message.footer?.text || footer[settings.language]} ${subName}`);
+
             const allowed = channels
                 .filter(channel => this.filter(channel, settings), this)
                 .map(async ({ channel }) => {
@@ -138,10 +146,7 @@ class Subscriptions {
             return total + allowed.length;
         }, 0);
 
-        this.client.logger.log(
-            `[${this.name}] Message was successfully sent to ${success} channels.`,
-            'sub'
-        );
+        this.client.logger.log(`[${this.name}] Message was successfully sent to ${success} channels.`);
     }
 
     filter({ channel, id, guild }: GuildChannel, settings: Settings): boolean {

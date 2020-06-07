@@ -60,7 +60,7 @@ async function getWhen(
     client: Assistant,
     { id, startDate, endDate }: { id: string; startDate: number; endDate: number }
 ): Promise<Record<string, string>> {
-    const path = `/api/drops/translate/when?id=${id}&start=${startDate}&end=${endDate}`;
+    const path = `/drops/translate/when?id=${id}&start=${startDate}&end=${endDate}`;
 
     const { translations } = await client.request(path, null, '1.0');
 
@@ -69,9 +69,9 @@ async function getWhen(
 
 async function getSendingRender(
     client: Assistant,
-    { id, startDate }: { id: string; startDate: number }
+    { id, sendingDate }: { id: string; sendingDate: number }
 ): Promise<Record<string, string>> {
-    const path = `/api/drops/render/sending?id=${id}&start=${startDate}`;
+    const path = `/drops/render/sending?id=${id}&start=${sendingDate}`;
 
     const { data } = await client.request(path, null, '1.0');
 
