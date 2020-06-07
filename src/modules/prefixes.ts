@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as Path from 'path';
 
-const path = Path.resolve(__dirname, 'configs', 'prefixes.json');
+const path = Path.resolve(__dirname, '../configs', 'prefixes.json');
 
 function read(): Record<string, Record<'prefix', string>> {
     const file = fs.readFileSync(path, 'utf8');

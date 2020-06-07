@@ -1,5 +1,5 @@
 // eslint-disable-next-line no-unused-vars
-module.exports = async ( client, channel ) => {
+export default async (): Promise<void> => {
     /* client.subs.forEach( ( sub, guildId ) => {
         const guild = client.guilds.get( guildId );
 

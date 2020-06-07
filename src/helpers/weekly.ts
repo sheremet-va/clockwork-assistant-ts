@@ -4,10 +4,16 @@ import { Embed } from './embed';
 import * as trials from './pledges';
 
 import { translate } from './utils';
+import { Item } from '../types';
+
+export declare type DataSubscriptions = {
+    eu: Item;
+    na: Item;
+}
 
 interface EmbedParams {
     translations: Record<string, string | Record<string, string>>;
-    data: Record<string, Record<string, string>>;
+    data: DataSubscriptions;
 }
 
 function buildEmbed(

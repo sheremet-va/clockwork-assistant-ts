@@ -1,9 +1,12 @@
-import { Subscriptions, NotifyData, Settings } from '../modules/subscriptions';
+import { Subscriptions, NotifyData, Settings, Subscription } from '../modules/subscriptions';
 
 import * as drops from '../helpers/drops';
 import { Embed } from '../helpers/embed';
 
-export default class extends Subscriptions {
+export default class extends Subscriptions implements Subscription {
+    data!: drops.ApiDrop;
+    translations!: drops.ApiTranslations;
+
     constructor(client: Assistant, info: NotifyData) {
         super(client, info, 'drops');
     }
@@ -17,7 +20,7 @@ export default class extends Subscriptions {
             const { language, timezone } = settings;
             const key = `${time}:${language}-${timezone}`;
 
-            if (!CACHE[key]) {
+            if (!(key in CACHE)) {
                 CACHE[key] = await drops.embedOne(this, guild.id, settings);
             }
 
@@ -33,4 +36,4 @@ export default class extends Subscriptions {
             return CACHE[key];
         });
     }
-};
+}

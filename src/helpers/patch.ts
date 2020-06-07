@@ -1,19 +1,32 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { Embed } from '../helpers/embed';
+import { translate } from './utils';
+import { Item } from '../types';
 
-// { translations, data },
-// { language }
+type Keys = 'title' | 'link' | 'description';
+
+export declare type DataSubscriptions = {
+    [k in Keys]: Item;
+} & {
+    image: string;
+}
+
+export declare type DataCommand = {
+    [k in Keys]: string;
+} & {
+    image: string;
+}
 
 // TODO для разных языков сделать
-function embed({ data }: { data: Record<string, string> }): Embed {
+function embed({ data }: { data: DataSubscriptions | DataCommand }, lang: string): Embed {
     const { title, link, description, image } = data;
 
     return new Embed({
-        title,
-        description,
+        title: translate(title, lang),
+        description: translate(description, lang),
         color: 'patch',
         image,
-        url: link
+        url: translate(link, lang)
     });
 }
 

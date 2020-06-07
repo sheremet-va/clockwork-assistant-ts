@@ -7,10 +7,10 @@ import * as patch from '../helpers/patch';
 
 const run = async (
     _: Assistant,
-    { channel }: AssistantMessage,
-    info: { data: Record<string, string> }
+    { channel, settings }: AssistantMessage,
+    info: { data: patch.DataCommand }
 ): Promise<Message> => {
-    const embed = patch.embed(info);
+    const embed = patch.embed(info, settings.language);
 
     return channel.send(embed);
 };

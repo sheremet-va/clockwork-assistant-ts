@@ -10,4 +10,4 @@ export default class extends Subscriptions {
     notify(): void {
         this.send((settings: Settings) => golden.embed(this, settings));
     }
-};
+}

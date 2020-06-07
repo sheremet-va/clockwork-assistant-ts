@@ -5,6 +5,7 @@ import { promisify } from 'util';
 import { AssistantMessage as Message, RequestInfo, AssistantMessage } from '../types';
 
 import * as prefixes from '../modules/prefixes';
+import * as analytics from '../modules/analytics';
 
 import { config } from '../config';
 import { Logger } from './logger';
@@ -252,16 +253,21 @@ class AssistantBase extends Client {
             throw new ClientError(`Number of attempts to get "${url}" exceeded`);
         }
 
-        // debug
-        console.log(settings);
+        const cleanUrl = settings.url.replace(this.config.back, 'TRUSTED');
+
+        this.logger.log(`[REQ] ${cleanUrl} requested.`);
+        analytics.add(cleanUrl);
+
+        const [, id] = /id=(\d+)/.exec(url) || [null, '0'];
+        const prefix = this.getPrefix(id || '0');
 
         return axios.request(settings)
             .then(({ data }) => data)
             .catch(async err => {
-                const data = err.response ? err.response.data || {} : {};
+                const data = (err.response ? (err.response.data || {}) : {}) as { error: string; message: string };
 
-                if (err.response?.status === 400 && channel) {
-                    throw new ClientError(data.code, data.message, channel);
+                if (err.response && err.response.status === 406 && channel) {
+                    throw new ClientError(data.error, data.message.render({ prefix }), channel);
                 }
 
                 this.logger.error(

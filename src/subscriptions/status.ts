@@ -4,6 +4,9 @@ import * as status from '../helpers/status';
 import { Embed } from '../helpers/embed';
 
 export default class extends Subscriptions {
+    data!: status.DataSubscription;
+    translations!: status.TranslationsSubscriptions;
+
     constructor(client: Assistant, info: NotifyData, name = 'status') {
         super(client, info, name);
     }
@@ -22,9 +25,10 @@ export default class extends Subscriptions {
         this.send((_: Settings, id: string) => embeds[id]);
     }
 
-    static get names() {
+    static get names(): string[] {
         return [
             'status',
+            'statusPC',
             'statusEU',
             'statusNA',
             'statusPTS',
@@ -36,4 +40,4 @@ export default class extends Subscriptions {
             'statusXBOX_EU'
         ];
     }
-};
+}

@@ -4,11 +4,16 @@ import { Embed } from '../helpers/embed';
 import * as pledges from '../helpers/pledges';
 
 export default class extends Subscriptions {
+    data!: {
+        today: pledges.Data;
+        tomorrow: pledges.Data;
+    }
+
     constructor(client: Assistant, info: NotifyData) {
         super(client, info, 'pledges');
     }
 
-    notify() {
+    async notify(): Promise<void> {
         const { today: string_today } = this.translations;
         const { today, tomorrow } = this.data;
 
@@ -26,4 +31,4 @@ export default class extends Subscriptions {
             );
         });
     }
-};
+}

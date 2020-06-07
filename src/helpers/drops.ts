@@ -4,7 +4,7 @@ import { Embed } from '../helpers/embed';
 import { translate } from '../helpers/translate';
 import { Settings } from '../modules/subscriptions';
 
-type Drop = {
+export declare type Drop = {
     when: string;
     where: string;
     info: string;
@@ -13,7 +13,7 @@ type Drop = {
     url: string;
 };
 
-type ApiDrop = {
+export declare type ApiDrop = {
     endDate: number;
     startDate: number;
     image: string;
@@ -24,7 +24,7 @@ type ApiDrop = {
     where: Item;
 }
 
-type ApiTranslations = {
+export declare type ApiTranslations = {
     title: Item;
     duration: Item;
     where: Item;

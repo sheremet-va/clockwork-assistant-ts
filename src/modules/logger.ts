@@ -4,6 +4,7 @@ import { promisify } from 'util';
 import * as moment from 'moment';
 
 import * as fs from 'fs';
+import * as Path from 'path';
 
 const appendFile = promisify(fs.appendFile);
 const writeFile = promisify(fs.writeFile);
@@ -28,7 +29,7 @@ export class Logger {
 
         const timestamp = `[${moment().format('YYYY-MM-DD HH:mm:ss')}]:`;
         const day = `${moment().format('YYYY-MM-DD')}`;
-        const path = `logs/${day}-logs.txt`;
+        const path = Path.resolve(__dirname, `../logs/${day}-logs.txt`);
         const message = `${timestamp} (${type.toUpperCase()}) ${content}`;
 
         try {

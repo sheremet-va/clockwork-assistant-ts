@@ -1,7 +1,7 @@
 import { Embed } from './embed';
 import { Settings } from '../modules/subscriptions';
 
-import { translate, Translations } from './utils';
+import { translate, Translations, SubsTranslations } from './utils';
 
 function title(
     days: string,
@@ -31,6 +31,10 @@ function build(
     type: string
 ): string {
     return type.replace(/(\w+)\+(\w+)|(\w+)/, (lang, lang1, lang2) => {
+        if(!lang2 && !(lang in subject)) {
+            return subject.en;
+        }
+
         if (!lang1) {
             return subject[lang].capitalize();
         }
@@ -56,21 +60,23 @@ function urlMask(
 }
 
 function buildTomorrow(
-    pledges: Record<string, string>[],
+    pledges: Record<Vendors, Item>,
     type: string
 ): string {
     const translate = (lang: string) => {
         return (title: Record<string, string>, i: number): string =>
-            i === 0 ? title[lang].capitalize() : title[lang];
+            i === 0 ? (title[lang] || title.en).capitalize() : (title[lang] || title.en);
     };
+
+    const pledgesNames = Object.values(pledges);
 
     return type.replace(/(\w+)\+(\w+)|(\w+)/, (lang, lang1, lang2) => {
         if (!lang1) {
-            return pledges.map(translate(lang)).join(', ');
+            return pledgesNames.map(translate(lang)).join(', ');
         }
 
-        const pledges1 = pledges.map(translate(lang1)).join(', ');
-        const pledges2 = pledges.map(translate(lang2)).join(', ');
+        const pledges1 = pledgesNames.map(translate(lang1)).join(', ');
+        const pledges2 = pledgesNames.map(translate(lang2)).join(', ');
 
         if (pledges1 !== pledges2) {
             return `${pledges1}\n${pledges2}`;
@@ -80,13 +86,17 @@ function buildTomorrow(
     });
 }
 
-type Pledges = Record<string, Record<string, string>[]>;
+export declare type Vendors = 'maj' | 'glirion' | 'urgarlag';
+export declare type Item = Record<'en' | 'ru', string>;
 
+export declare type Data = Record<'pledges' | 'masks', Record<Vendors, Item>>;
+
+// TODO MASK LANGUAGE
 function buildEmbed(
     embed: Embed,
     { pledgesLang, language }: Settings,
-    tData: { data?: Pledges } | null,
-    { translations, data: { pledges, masks } }: { translations: Translations; data: Pledges }
+    tData: { data?: Data } | null,
+    { translations, data: { pledges, masks } }: { translations: Translations | SubsTranslations; data: Data }
 ): Embed {
     const { tomorrow, mask } = translations;
 
@@ -95,9 +105,9 @@ function buildEmbed(
         mask: translate(mask, language)
     };
 
-    const fields = pledges.map((pledge, i) => ({
+    const fields = Object.entries(pledges).map(([vendor, pledge]) => ({
         name: build(pledge, pledgesLang),
-        value: `${strings.mask}: ${urlMask(masks[i], pledgesLang)}`
+        value: `${strings.mask}: ${urlMask(masks[vendor as Vendors], pledgesLang)}`
     }));
 
     embed.setColor('pledges').addFields(fields);

@@ -1,12 +1,13 @@
 // Based on https://github.com/AnIdiotsGuide/guidebot
 
 import { Assistant } from './modules/assistant';
+import { get as getCommands } from './modules/commands';
 
 import { promisify } from 'util';
 import { readdir as readSync } from 'fs';
+import * as Path from 'path';
 
 import { notUndefined } from './helpers/utils';
-import { Command } from './types';
 
 import * as Subscriptions from './services/subscriptions';
 
@@ -15,21 +16,23 @@ const readdir = promisify(readSync);
 const client = new Assistant();
 
 const init = async (): Promise<void> => {
-    const { data: { commands } } = await client.request('/commands?id=333', null, '1.0') as {
-        data: { commands: Command[] };
-    };
+    const commands = await getCommands(client);
 
     client.logger.log(`Launching ${commands.length} commands.`);
 
-    commands.forEach(command => {
-        const response = client.loadCommand(command);
+    const cmds = commands.map(async command => {
+        const response = await client.loadCommand(command);
 
         if (response) {
             console.log(response);
         }
     });
 
-    const evtFiles = await readdir('./events/'); // todo Path.resolve
+    await Promise.all(cmds)
+        .catch(console.error);
+
+    const evtPath = Path.resolve(__dirname, 'events');
+    const evtFiles = await readdir(evtPath);
 
     client.logger.log(`Launching ${evtFiles.length} events.`);
 
@@ -43,38 +46,39 @@ const init = async (): Promise<void> => {
 
     client.generateLevelCache();
 
-    const subscriptionNames = await readdir('./subscriptions/');
+    // const subsPath = Path.resolve(__dirname, 'subscriptions');
+    // const subscriptionNames = await readdir(subsPath);
 
-    client.logger.log(`Launching ${subscriptionNames.length} subscriptions.`);
+    // client.logger.log(`Launching ${subscriptionNames.length} subscriptions.`);
 
-    const subsPromises = subscriptionNames.map(async file => {
-        if (!file.endsWith('.ts') && !file.endsWith('.js')) { // .js
-            return;
-        }
+    // const subsPromises = subscriptionNames.map(async file => {
+    //     if (!file.endsWith('.ts') && !file.endsWith('.js')) { // .js
+    //         return;
+    //     }
 
-        const path = `./subscriptions/${file}`;
-        const moduleName = file.replace(/\.ts|\.js/, '');
-        const botModule = (await import(path)).default;
-        const names = botModule.names || [moduleName];
+    //     const path = `./subscriptions/${file}`;
+    //     const moduleName = file.replace(/\.ts|\.js/, '');
+    //     const botModule = (await import(path)).default;
+    //     const names = botModule.names || [moduleName];
 
-        return {
-            name: moduleName,
-            controller: botModule,
-            names
-        };
-    });
+    //     return {
+    //         name: moduleName,
+    //         controller: botModule,
+    //         names
+    //     };
+    // });
 
-    const subscriptions = await Promise.all(subsPromises)
-        .then(subs => subs.filter(notUndefined))
-        .catch(err => {
-            client.logger.error(err);
+    // const subscriptions = await Promise.all(subsPromises)
+    //     .then(subs => subs.filter(notUndefined))
+    //     .catch(err => {
+    //         client.logger.error(err);
 
-            process.exit(1);
-        });
+    //         process.exit(1);
+    //     });
 
-    Subscriptions.init(client, subscriptions);
+    // Subscriptions.init(client, subscriptions);
 
     client.login(client.config.token);
 };
 
-init();
+init().catch(console.error);

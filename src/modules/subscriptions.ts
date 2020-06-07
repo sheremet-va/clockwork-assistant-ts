@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { ClientError } from '../modules/error';
 import { Guild, TextChannel, BitFieldResolvable, PermissionString } from 'discord.js';
 import { Embed } from '../helpers/embed';
 
@@ -19,12 +18,16 @@ interface User {
     settings: Settings;
 }
 
+type language = 'ru' | 'en';
+
 export declare interface Settings {
-    language: string;
+    language: language;
     timezone: string;
     pledgesLang: string;
     luxuryLang: string;
 }
+
+// ADD NEW
 
 export declare interface NotifyData {
     translations: Translations;
@@ -45,12 +48,16 @@ interface AssistantGuild {
     settings: Settings;
 }
 
+export declare interface Subscription {
+    notify(): Promise<void>;
+}
+
 class Subscriptions {
     client: Assistant;
 
     name: string;
     translations: Translations;
-    data: any;
+    data: unknown;
     subscribers: Subscribers;
     settings: Settings;
     events: { [k: string]: ((data: any) => void)[] };
@@ -113,11 +120,13 @@ class Subscriptions {
             const message = builder(settings, guild.id);
 
             if (!message) {
-                throw new ClientError(`No message was provided for ${this.name} subscription.`);
+                this.client.logger.error(`No message for ${this.name} (${guild.id}).`);
+
+                return total;
             }
 
             const allowed = channels
-                .filter(this.filter, this)
+                .filter(channel => this.filter(channel, settings), this)
                 .map(async ({ channel }) => {
                     // дописать
                     channel.send(message)
@@ -135,7 +144,7 @@ class Subscriptions {
         );
     }
 
-    filter({ channel, id, guild }: GuildChannel): boolean {
+    filter({ channel, id, guild }: GuildChannel, settings: Settings): boolean {
         if (!channel) {
             this.client.logger.error(`Channel ${id} from '${guild.name}' doesn't exist.`);
 
@@ -160,10 +169,10 @@ class Subscriptions {
             })
             .map(({ permission }) => {
                 this.client.logger.error(
-                    `Channel ${channel.name} (${id}) from '${guild.name}' doesn't have permission '${permission}' or doesn't include me!.`
+                    `Channel ${channel.name} (${id}) from '${guild.name}' doesn't have permission '${permission}' or doesn't include me!`
                 );
 
-                this.emit('permissionError', { permission, channel, guild });
+                this.emit('permissionError', { permission, channel, guild, settings });
             }, this);
 
         if (errors.length) {
@@ -182,7 +191,7 @@ class Subscriptions {
     }
 
     on(name: 'referenceError', func: (data: { id: string; guild: Guild }) => void): void
-    on(name: 'permissionError', func: (data: { permission: string; channel: TextChannel; guild: Guild }) => void): void
+    on(name: 'permissionError', func: (data: { permission: string; channel: TextChannel; guild: Guild; settings: Settings }) => void): void
     on(name: string, func: (data: any) => void): void {
         if (!this.events[name]) {
             this.events[name] = [];

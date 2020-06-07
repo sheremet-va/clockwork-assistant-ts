@@ -1,11 +1,16 @@
 import { ErrorEmbed } from '../modules/error';
-import { Subscriptions } from '../modules/subscriptions';
+import { Subscriptions, NotifyData } from '../modules/subscriptions';
 
 import * as fastify from 'fastify';
 
 const app = fastify();
 
 const PORT = 3007;
+
+const CACHED = {
+    ru: {},
+    en: {}
+} as Record<'ru' | 'en', Record<string, string>>;
 
 function handle(client: Assistant, subscriptions: Subscriptions): void {
     subscriptions.on('referenceError', async function (this: Subscriptions, { id, guild }) {
@@ -24,16 +29,22 @@ function handle(client: Assistant, subscriptions: Subscriptions): void {
 
         await client.request(options, null, '1.0');
 
-        client.logger.log(`Channel ${id} from '${guild.name}' was unsubed (actually in wasn't).`, 'unsub');
+        client.logger.log(`Channel ${id} from '${guild.name}' was unsubed (actually in wasn't).`);
     });
 
-    subscriptions.on('permissionError', async ({ permission, channel, guild }) => {
-        const error = 'PERMISSION_SUBSCRIPTIONS_ERROR';
-        const pathError = `/api/translations/errors/${error}?id=${guild.id}`;
-        const pathNames = `/api/translations/subscriptions/permissions/${permission}?id=${guild.id}`;
+    subscriptions.on('permissionError', async ({ permission, channel, guild, settings }) => {
+        if(!guild.owner) {
+            return;
+        }
 
-        const { translations } = await client.request(pathError, null, '1.0');
-        const { translations: name } = await client.request(pathNames, null, '1.0');
+        const error = 'PERMISSION_SUBSCRIPTIONS';
+        const pathError = `/translations/errors/errors/${error}?id=${guild.id}`;
+        const pathNames = `/translations/subscriptions/permissions/${permission}?id=${guild.id}`;
+
+        const cached = CACHED[settings.language];
+
+        const { translations: errorString } = (error in cached ? { translations: cached[error] } : await client.request(pathError, null, '1.0'));
+        const { translations: name } = (permission in cached ? { translations: cached[permission] } : await client.request(pathNames, null, '1.0'));
 
         const render = {
             guild: guild.name,
@@ -41,24 +52,32 @@ function handle(client: Assistant, subscriptions: Subscriptions): void {
             permission: name
         };
 
-        const embed = new ErrorEmbed(translations[error].render(render));
+        cached[permission] = name;
 
-        if(!guild.owner) {
-            return;
-        }
+        const message = cached[error] = errorString;
+
+        const embed = new ErrorEmbed(message.render(render));
 
         guild.owner.send(embed);
     });
 }
 
+interface SubConstructor {
+    new(client: Assistant, info: NotifyData, name: string): SubController;
+}
+
+interface SubController extends Subscriptions {
+    notify(): Promise<void>;
+}
+
 async function post(
     client: Assistant,
     request: fastify.FastifyRequest,
-    controller, // TODO
+    controller: SubConstructor, // TODO
     name: string
 ): Promise<{ status: string }> {
     if (!request.body) {
-        return;
+        return { status: 'fail' };
     }
 
     const {
@@ -76,7 +95,7 @@ async function post(
         throw new Error('No data recieved.');
     }
 
-    const subscriptions: Subscriptions = new controller(
+    const subscriptions = new controller(
         client,
         { translations, data, subscribers, settings },
         name
@@ -84,14 +103,16 @@ async function post(
 
     handle(client, subscriptions);
 
-    return (
-        (subscriptions.notify.constructor.name == 'AsyncFunction'
-            ? await subscriptions.notify()
-            : subscriptions.notify()) || { status: 'success' }
-    );
+    await subscriptions.notify();
+
+    return { status: 'success' };
 }
 
-function init(client: Assistant, subscriptions: { name: string; names: string[]; controller: Subscriptions }[]): void {
+function init(
+    client: Assistant,
+    subscriptions: { name: string; names: string[]; controller: SubConstructor }[]
+): void {
+
     subscriptions.forEach(({ controller, names }) =>
         names.forEach(name =>
             app.post('/subscriptions/' + name, async (request, reply) => {
@@ -106,7 +127,7 @@ function init(client: Assistant, subscriptions: { name: string; names: string[];
                     console.log(e);
                     client.logger.error(e.message);
 
-                    // reply.code(500); hmmm
+                    reply.code(500); // hmmm
 
                     return { status: 'fail' };
                 }

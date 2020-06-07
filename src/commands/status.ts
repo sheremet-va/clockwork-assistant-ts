@@ -1,7 +1,16 @@
 // Команда "СТАТУС" присылает состояние всех серверов или сервера, указанного в аргументе.
 
-import * as status from '../helpers/status';
-import { AssistantMessage, RequestInfo } from '../types';
+import {
+    embed,
+    Status,
+    Statuses,
+    Platform,
+    Render,
+    TranslationsCommand,
+    DataCommand
+} from '../helpers/status';
+
+import { AssistantMessage } from '../types';
 import { Message } from 'discord.js';
 
 const aliases = {
@@ -14,48 +23,61 @@ const aliases = {
     xbox_us: ['хбох на', 'хбох_на', 'иксбокс на', 'иксбокс_на', 'xbox_na', 'xbox na']
 };
 
-const groups = {
+type Group = {
+    aliases: string[];
+    servers: (keyof Statuses)[];
+    maintenance: string;
+}
+
+const groups: Record<Platform, Group> = {
     pc: {
         aliases: ['пк'],
         servers: ['eu', 'na', 'pts'],
-        maintence: 'PC/Mac'
+        maintenance: 'pc'
     },
     ps: {
         aliases: ['пс', 'плейстейшн'],
         servers: ['ps_eu', 'ps_us'],
-        maintence: 'PlayStation'
+        maintenance: 'ps'
     },
     xbox: {
         aliases: ['хбох', 'иксбокс'],
         servers: ['xbox_eu', 'xbox_us'],
-        maintence: 'Xbox One'
+        maintenance: 'xbox'
     }
 };
 
-function findGroup(regServer: RegExp) {
+function findGroup(regServer: RegExp): (typeof groups)[Platform] | undefined {
     const [, group] = Object.entries(groups)
         .find(([key, group]) => regServer.test(key) || group.aliases.some(alias => regServer.test(alias))) || [];
 
     return group;
 }
 
-function buildMaintence(info, group) {
-    return Object.entries(info.data.maintence)
-        .filter(([region]) => group.maintence === region)
-        .reduce((total, [region, value]) => ({ ...total, [region]: value }), {});
+type Maintenance = Record<Platform, Render>;
+
+function buildMaintence(
+    maintenance: Maintenance,
+    group: Group
+): Maintenance {
+    return Object.entries(maintenance)
+        .filter(([region]) => group.maintenance === region)
+        .reduce((total, [region, value]) => ({ ...total, [region]: value }), {} as Maintenance);
 }
+
+type Translations = Record<keyof TranslationsCommand, string>;
 
 // eslint-disable-next-line no-unused-vars
 const run = async (
     client: Assistant,
     { channel, settings, guild }: AssistantMessage,
-    info: { translations: any; data: any }, // TODO
+    info: { translations: Translations; data: DataCommand }, // TODO
     args: string[]
 ): Promise<Message | false> => {
     if(!args.length) {
-        const embed = await status.embed({ client, ...info }, settings, guild.id);
+        const message = await embed({ client, ...info }, settings, (guild || { id: '0' }).id);
 
-        return channel.send(embed);
+        return channel.send(message);
     }
 
     const userServer = args.join(' ');
@@ -65,25 +87,27 @@ const run = async (
 
     if(group) {
         const servers = group.servers.reduce((total, name) =>
-            ({ ...total, [name]: info.data[name] }), {}) as { en: 'UP' | 'DOWN' };
+            ({ ...total, [name]: info.data[name] }), {}) as Record<keyof Statuses, Status>;
 
-        const maintence = buildMaintence(info, group);
+        const maintenance = buildMaintence(info.data.maintenance, group);
 
-        const embed = await status.embed(
+        const message = await embed(
             {
                 client,
                 ...info,
-                data: { ...servers, maintence }
+                data: { ...servers, maintenance }
             },
             settings,
-            guild?.id || '' // апи охуэет
+            (guild || { id: '0' }).id // апи охуэет
         );
 
-        return channel.send(embed);
+        return channel.send(message);
     }
 
     const [server] = Object.entries(aliases)
-        .find(([key, aliases]) => regServer.test(key) || aliases.some(alias => regServer.test(alias))) || [];
+        .find(([key, aliases]) =>
+            regServer.test(key) || aliases.some(alias => regServer.test(alias))
+        ) as [keyof Statuses, string[]];
 
     if(!server) {
         return false;
@@ -98,19 +122,22 @@ const run = async (
 
     const [, serverGroup] = foundGroup;
 
-    const maintence = buildMaintence(info, serverGroup);
+    const maintenance = buildMaintence(info.data.maintenance, serverGroup);
 
-    const embed = await status.embed(
+    const message = await embed(
         {
+            client,
             ...info,
             data: {
                 [server]: info.data[server],
-                maintence
+                maintenance
             }
-        }
+        },
+        settings,
+        (guild || { id: '0' }).id
     );
 
-    return channel.send(embed);
+    return channel.send(message);
 };
 
 const conf = {
@@ -122,4 +149,3 @@ const conf = {
 };
 
 export { run, conf };
-

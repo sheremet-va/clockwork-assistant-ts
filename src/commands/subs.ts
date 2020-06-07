@@ -98,7 +98,11 @@ async function run(
         })
         .join('\n');
 
-    const embed = new Embed({ description });
+    const embed = new Embed({
+        author: translations.subscribed_to,
+        description,
+        color: 'subscriptions'
+    });
 
     return channel.send(embed);
 }

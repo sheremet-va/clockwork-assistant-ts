@@ -25,13 +25,19 @@ function checkPermissions(channel: TextChannel, bot: User): boolean {
 }
 
 function log(message: AssistantMessage): string {
-    if (message.guild) {
-        const channel = message.channel as TextChannel;
+    if (message.channel.type === 'text' && message.guild) {
+        const { channel, guild, content, author} = message;
 
-        return `${message.author.tag} from '${message.guild.name}' launches ${message.content} in '${channel.name}'.`;
+        return `${author.id} from '${guild.id}' guild launches ${content} in '${channel.id}' channel.`;
     }
 
-    return `${message.author.tag} launches ${message.content} in DM.`;
+    return `${message.author.id} launches ${message.content} in DM.`;
+}
+
+async function getInfo(client: Assistant, cmd: { conf: { path?: string } }, message: AssistantMessage): Promise<object> {
+    return cmd.conf.path
+        ? await client.request(cmd.conf.path + '?id=' + message.id, message.channel, '1.0')
+        : {};
 }
 
 export default async (
@@ -55,16 +61,7 @@ export default async (
 
     if (!message.content.startsWith(prefix)) return;
 
-    const user = await client.getUser(message.id);
-
-    const settings = message.settings = user.settings;
-    message.subs = user.subscriptions;
-    message.languages = user.languages;
-
-    const level = client.permlevel(message);
-    message.author.permLevel = level;
-
-    const args = message.args = message.content.slice(settings.prefix.length).trim().split(/ +/g);
+    const args = message.args = message.content.slice(prefix.length).trim().split(/ +/g);
     const command = message.command = (args.shift() || '').toLowerCase();
 
     if (!message.member && message.guild) {
@@ -76,6 +73,16 @@ export default async (
     const cmd = client.commands.get(command) || client.commands.get(alias || '');
 
     if (!cmd) return;
+
+    // TODO CACHE, remove cache on certain commands
+    const user = await client.getUser(message.id);
+
+    message.settings = user.settings;
+    message.subs = user.subscriptions;
+    message.languages = user.languages;
+
+    const level = client.permlevel(message);
+    message.author.permLevel = level;
 
     if (message.guild && !checkPermissions(message.channel as TextChannel, bot)) {
         return;
@@ -91,9 +98,7 @@ export default async (
 
     client.logger.cmd(permLevel.name + ' ' + log(message));
 
-    const info = cmd.conf.path
-        ? await client.request(cmd.conf.path + '?id=' + message.id, message.channel, '1.0')
-        : {};
+    const info = await getInfo(client, cmd, message);
 
     const result = await cmd.run(client, message, info, args);
 
@@ -108,6 +113,8 @@ export default async (
         const customCmd = client.commands.get(result);
 
         if(customCmd) {
+            const info = await getInfo(client, customCmd, message);
+
             customCmd.run(client, message, info, args);
         }
     }

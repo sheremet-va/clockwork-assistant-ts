@@ -23,7 +23,7 @@ const run = async (
 
     const embed = await settings.embed(
         { client, channel },
-        `/settings/${type}/${value}?id=${id}`
+        { type, value, id }
     );
 
     return channel.send(embed);
