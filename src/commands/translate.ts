@@ -154,6 +154,10 @@ async function run(
         const cleanedRu = clean(textRuOff);
         const cleanedEn = clean(textEn);
 
+        if(cleanedRu === cleanedEn) {
+            return acc;
+        }
+
         const stringified = `• **${cleanedRu.capitalize()}** (${cleanedEn})`;
 
         if (acc[tableName].results.includes(stringified)) {
