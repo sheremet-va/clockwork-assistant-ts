@@ -18,7 +18,6 @@ const run = async (
     return channel.send(embed);
 };
 
-
 const conf = {
     enabled: true,
     guildOnly: false,
@@ -28,4 +27,3 @@ const conf = {
 };
 
 export { run, conf };
-
