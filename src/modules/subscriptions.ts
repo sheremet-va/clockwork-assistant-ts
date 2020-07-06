@@ -131,7 +131,7 @@ class Subscriptions {
 
             const subName = `[${name[settings.language]}]`;
 
-            message.setTimestamp().setFooter(`${message.footer?.text || footer[settings.language]} ${subName}`);
+            message.setFooter(`${message.footer?.text || footer[settings.language]} ${subName}`);
 
             const allowed = channels
                 .filter(channel => this.filter(channel, settings), this)

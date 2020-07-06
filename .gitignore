@@ -1,6 +1,8 @@
 src/config.js
 src/token.json
 
+dist/
+
 src/configs/*
 src/logs/*
 

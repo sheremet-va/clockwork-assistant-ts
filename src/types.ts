@@ -36,3 +36,5 @@ export declare type Command = {
 }
 
 export declare type Item = Record<string, string>;
+
+export declare type language = 'en' | 'ru';

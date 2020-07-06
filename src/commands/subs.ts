@@ -4,6 +4,7 @@ import { Message } from 'discord.js';
 
 import { AssistantMessage } from '../types';
 import { Embed } from '../helpers/embed';
+import { entries } from '../helpers/utils';
 
 // import * as subscriptions from '../helpers/subscriptions';
 
@@ -31,6 +32,7 @@ type ApiSubscriptions = Record<string, string[]>;
 
 type ApiTranslations = Record<string, string> & {
     subscriptions: SubscriptionDescription[];
+    groups: Record<string, string[]>;
 }
 
 interface RecievedData {
@@ -49,10 +51,10 @@ async function run(
     { data, translations }: RecievedData,
     [name]: [string | undefined]
 ): Promise<Message> {
-    if(name) {
+    if (name) {
         const sub = findSub(name, { translations });
 
-        if(sub) {
+        if (sub) {
             const embed = new Embed(
                 {
                     author: `${translations.subscription}: ${sub.title}`,
@@ -72,16 +74,25 @@ async function run(
         .filter(([, value]) => value.includes(`${channel.id}`))
         .map(([name]) => name); // subs names
 
-    if(!channelSubs.length) {
-        // const fields = Object.values( translations.subscriptions )
-        //     .map( ({ title, description, name }) => )
+    if (!channelSubs.length) {
+        const fields = entries(translations.groups).map(([name, subscriptions]) => {
+            return {
+                name,
+                value: subscriptions.map(code => {
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    const subscription = translations.subscriptions.find(sub => sub.name === code)!;
 
-        // console.log( fields );
+                    return subscription.title;
+                }).join('\n'),
+                inline: true
+            };
+        });
 
         const embed = new Embed(
             {
                 author: translations.title,
-                description: `${translations.no_subscriptions} ${translations.to_subscribe.render({ prefix })}.`,
+                description: `${translations.no_subscriptions} ${translations.to_subscribe.render({ prefix })}`,
+                fields,
                 color: 'subscriptions'
             }
         );

@@ -1,6 +1,6 @@
 // Команда "TRANSLATE" находит переводы в зависимости от переданной строки
 
-import { Message } from 'discord.js';
+import { Message, EmbedField } from 'discord.js';
 
 import { AssistantMessage, RequestInfo } from '../types';
 
@@ -47,60 +47,83 @@ const tables = {
 
 const MAX_ROWS = 15;
 
-function getTable(search: string): string | null {
+function getTable(search: string[]): [string, string[]] | [null, string[]] {
     const item = Object.entries(tables)
-        .find(([, { aliases }]) => aliases.includes(search));
+        .find(([, { aliases }]) => aliases.find(alias => {
+            const regexp = new RegExp(alias, 'i');
 
-    return (item || [null])[0];
+            return search.some(el => regexp.test(el));
+        }));
+
+    if (item) {
+        return [item[0], item[1].aliases];
+    }
+
+    return [null, []];
 }
 
 function clean(value: string): string {
-    return value.replace('<<player{','').replace('}>>','').replace(/\^\w+$/,'');
+    return value.replace('<<player{', '').replace('}>>', '').replace(/\^\w+$/, '');
 }
 
 function isEmpty(object: typeof tables): boolean {
-    return Boolean(Object.values(object).filter(({ results }) => results.length).length);
+    return Boolean(!Object.values(object).filter(({ results }) => results.length).length);
 }
 
-function buildFields(translations: Record<string, { results: string[] }>): Record<string, string> {
-    const fields = Object.entries(translations)
-        .reduce((acc, [table, { results }]) => {
-            const field = results.reduce((joined, string) => {
-                if(joined.length > 1023) {
-                    return joined;
-                }
+function tooBig(fields: EmbedField[]): boolean {
+    const result = fields.map(({ name, value }) => name + value).join('');
 
-                return `${joined}\n${string}`;
-            }, '');
+    return result.length > 6000;
+}
 
-            return {
-                ...acc,
-                [table]: field.trim()
-            };
-        }, {} as Record<string, string>);
+function buildFields(translations: Record<string, { results: string[] }>): Record<string, string[]> {
+    let m = 0,
+        k = 0;
 
-    return fields;
+    const finalResult = {} as Record<string, string[]>;
+
+    while (m < MAX_ROWS && k < MAX_ROWS) {
+        for (const key in translations) {
+            if (!finalResult[key]) finalResult[key] = [];
+            if (translations[key].results[m]) {
+                finalResult[key].push(translations[key].results[m]);
+                k++;
+            }
+            if (finalResult[key].join('\n').length > 1023) {
+                finalResult[key].pop();
+                k--;
+            }
+            if (finalResult[key].length === 0) delete finalResult[key];
+        }
+        m++;
+    }
+
+    return finalResult;
 }
 
 async function run(
     _client: Assistant,
     { channel }: AssistantMessage,
     _info: RequestInfo,
-    [search = '']
+    args: string[] = []
 ): Promise<Message | false> {
 
-    if(!search) {
+    if (!args.length) {
         return false;
     }
 
-    const table = getTable(search);
-    const query = search.replace(table || '', '');
+    const [table, aliases] = getTable(args);
+    const query = args
+        .filter(word => !aliases.includes(word.toLowerCase()))
+        .join(' ')
+        .toLowerCase()
+        .trim();
 
-    if(query.length < 4) {
-        throw new ClientError('Пожалуйста, введите запрос длиной больше 3 символов (не считая категории)', '', channel);
+    if (query.length < 4) {
+        throw new ClientError('Пожалуйста, введите запрос длиной больше 3 символов (не считая категории).', '', channel);
     }
 
-    const encodedSearch = encodeURI(query).replace('&','%26').replace('#','%23').replace('#','%24');
+    const encodedSearch = encodeURI(query).replace('&', '%26').replace('#', '%23').replace('#', '%24');
 
     const apiUrl = `http://ruesoportal.elderscrolls.net/ESOBase/searchservlet/?searchtext=${encodedSearch}`;
 
@@ -111,11 +134,11 @@ async function run(
     const tableError = table ? `в таблице «${table}» ` : '';
     const error = `К сожалению, по запросу «${query}» ${tableError}ничего не найдено.`;
 
-    if(empty) {
+    if (empty) {
         throw new ClientError(error, '', channel);
     }
 
-    const result = JSON.parse(data.replace('parseResponse(','').replace(');','')) as {
+    const result = JSON.parse(data.replace('parseResponse(', '').replace(');', '')) as {
         tableName: string;
         textRuOff: string;
         textEn: string;
@@ -124,7 +147,7 @@ async function run(
     const skip = ['Описание способности', 'Описание коллекционного предмета'];
 
     const translations = result.reduce((acc, { tableName, textRuOff, textEn }) => {
-        if(!tableName || skip.includes(tableName) || !(tableName in tables)) {
+        if (!tableName || skip.includes(tableName) || !(tableName in tables)) {
             return acc;
         }
 
@@ -133,7 +156,7 @@ async function run(
 
         const stringified = `• **${cleanedRu.capitalize()}** (${cleanedEn})`;
 
-        if(acc[tableName].results.includes(stringified)) {
+        if (acc[tableName].results.includes(stringified)) {
             return acc;
         }
 
@@ -142,18 +165,16 @@ async function run(
         return acc;
     }, tables);
 
-    if(isEmpty(translations)) {
+    if (isEmpty(translations)) {
         throw new ClientError(error, '', channel);
     }
 
-    if(table && translations[table] && !translations[table].results) {
+    if (table && translations[table] && !translations[table].results) {
         throw new ClientError(error, '', channel);
     }
 
     const allCount = Object.values(translations).reduce((sum, { results }) => sum + results.length, 0);
     const allCountString = allCount.pluralize(['совпадение', 'совпадения', 'совпадений'], 'ru');
-
-    const fields = buildFields(translations);
 
     const embed = new Embed({
         color: 'translate',
@@ -162,29 +183,37 @@ async function run(
         url: 'https://elderscrolls.net/tes-online/rueso-glossary/'
     });
 
-    if(table && fields[table]) {
+    if (table && translations[table]) {
+        const fields = buildFields({ [table]: translations[table] });
+
         const founded = translations[table];
-        const count = founded.results.length;
+        const count = fields[table].length;
 
         const countString = count.pluralize(['совпадение', 'совпадения', 'совпадений'], 'ru');
 
-        embed.addField(founded.plural, fields[table]);
+        embed.addField(founded.plural, fields[table].join('\n'));
 
-        if(allCount > MAX_ROWS) {
+        if (allCount > MAX_ROWS) {
             embed.setDescription(`По вашему запросу было найдено ${countString} (во всех таблицах найдено ${allCountString}).`);
         }
 
         return channel.send(embed);
     }
 
-    const embedFields = Object.entries(fields).map(([name, value]) => ({ name, value, inline: false }));
+    const fields = buildFields(translations);
+
+    const embedFields = Object.entries(fields).map(([name, value]) => ({ name, value: value.join('\n'), inline: false }));
+
+    if (tooBig(embedFields)) {
+        embedFields.pop();
+    }
 
     embed.addFields(embedFields);
 
-    if(allCount > MAX_ROWS) {
+    if (allCount > MAX_ROWS) {
         const shownCount = embedFields.reduce((sum, { value }) => sum + value.split('\n').length, 0);
 
-        const shown = `Показано ${shownCount.pluralize(['совпадение', 'совпадения', 'совпадений'], 'ru')} из ${allCountString}.`;
+        const shown = `Показано ${shownCount.pluralize(['совпадение', 'совпадения', 'совпадений'], 'ru')} из ${allCountString}. `;
         const notice = 'Уточните запрос или воспользуйтесь поиском по [ссылке](https://elderscrolls.net/tes-online/rueso-glossary/).';
 
         embed.setDescription(shown + notice);

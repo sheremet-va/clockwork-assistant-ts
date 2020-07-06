@@ -146,6 +146,16 @@ class Embed extends MessageEmbed {
 
         return this;
     }
+
+    setFooter(footer: string): this {
+        super.setFooter(footer);
+
+        if(footer) {
+            this.setTimestamp();
+        }
+
+        return this;
+    }
 }
 
 export { Embed };

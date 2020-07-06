@@ -1,6 +1,6 @@
 import { Settings } from '../modules/subscriptions';
 import { Embed } from '../helpers/embed';
-import { RequestInfo } from '../types';
+import { RequestInfo, language } from '../types';
 
 import * as moment from 'moment-timezone';
 import * as Intl from 'intl';
@@ -35,11 +35,22 @@ function build(items: LuxuryItem[], merchantsLang: string): string {
 
         // TODO redo for more LANGUAGES
         const money = new Intl.NumberFormat(isRu ? 'ru-RU' : 'en-US').format(price);
-        const title = utils.build(name, merchantsLang, '**{{ first }}** - _{{ second }}_');
 
-        const strong = title.includes('**') ? '' : '**';
+        const title = (merchantsLang.split('+') as language[]).map((lang, i) => {
+            const first = i === 0;
+            const strong = first ? '**' : '';
+            const isNewString = isNew && first ? ':new: ' : '';
+            const goldString = first ? `: ${money} g.` : '';
+            const title = name[lang] || name.en;
 
-        return `• ${isNew ? ':new: ' : ''}${strong}${title}${strong}: ${money} g.`;
+            return `${isNewString}${strong}${title}${strong}${goldString}`;
+        }).join('\n');
+
+        // const title = utils.build(name, merchantsLang, '**{{ first }}** - _{{ second }}_');
+
+        // const strong = title.includes('**') ? '' : '**';
+
+        return `• ${title}`;
     }).join('\n');
 }
 

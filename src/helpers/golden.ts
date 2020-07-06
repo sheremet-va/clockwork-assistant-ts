@@ -1,6 +1,7 @@
 import { Settings } from '../modules/subscriptions';
 import { Embed } from '../helpers/embed';
-import { RequestInfo } from '../types';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { RequestInfo, language } from '../types';
 
 import * as moment from 'moment-timezone';
 import * as Intl from 'intl';
@@ -34,21 +35,26 @@ function build(
         merchantsLang: string;
     }
 ): string {
+    const isRu = merchantsLang.includes('ru');
+
     return items.map(({ name, price, canSell, hasTypes, trait }) => {
-        const isRu = merchantsLang.includes('ru');
-        const canSellString = canSell ? '__' : '';
-        const hasTypesString = hasTypes ? ` - _${utils.translate(has_types, language)}_` : '';
-        const title = utils.build(name, merchantsLang, '**{{ first }}** - _{{ second }}_');
+        const hasTypesString = hasTypes ? `(${utils.translate(has_types, language)})` : '';
 
-        const traits = trait.map(traitName => utils.build(traitName, merchantsLang)).join(' / ');
+        const title = (merchantsLang.split('+') as language[]).map((lang, i) => {
+            const strong = i === 0 ? '**' : '';
+            const canSellString = canSell && i === 0 ? '\\*' : '';
+            const title = name[lang] || name.en;
+            const traits = trait.map(t => t[lang] || t.en).join('/');
+
+            return `${canSellString}${strong}${title}${strong} (${traits})`;
+        }).join('\n');
+
         const cost = [
-            new Intl.NumberFormat(isRu ? 'ru-RU' : 'en-US').format(price.gold) + ' g.',
+            new Intl.NumberFormat(isRu ? 'ru-RU' : 'en-US').format(price.gold) + ' GOLD',
             new Intl.NumberFormat(isRu ? 'ru-RU' : 'en-US').format(price.ap) + ' AP'
-        ].join(' / ');
+        ].join(' • ');
 
-        const strong = title.includes('**') ? '' : '**';
-
-        return `• ${strong}${canSellString}${title}${canSellString}${strong} (${traits}${hasTypesString}): ${cost}`;
+        return `• ${title}\n${cost} ${hasTypesString}`;
     }).join('\n');
 }
 
@@ -69,7 +75,7 @@ function embed({ translations, data }: RequestInfo, settings: Settings): Embed {
 
     return new Embed({
         title: utils.translate(title, language).render({ date: tz_date }),
-        description: description + `\n_${utils.translate(can_sell, language)}_`,
+        description: description + `\n_* — ${utils.translate(can_sell, language).toLowerCase()}_`,
         color: 'golden',
         image: 'golden',
         footer: utils.translate(provided, language),
