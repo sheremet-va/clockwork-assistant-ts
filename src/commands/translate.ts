@@ -102,7 +102,12 @@ async function run(
 
     const fields = buildFields(translations);
 
-    const embedFields = Object.entries(fields).map(([name, value]) => ({ name, value: value.join('\n'), inline: false }));
+    const embedFields = Object.entries(fields)
+        .map(([name, value]) => ({
+            name: `${name} (${value.length})`,
+            value: value.join('\n'),
+            inline: false
+        }));
 
     embed.addFields(embedFields);
 
