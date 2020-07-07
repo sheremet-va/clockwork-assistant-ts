@@ -71,8 +71,6 @@ async function run(
     const translations = response.translations as ApiTranslations;
     const { table, query } = response.data as { table: string; query: string };
 
-    console.log(translations);
-
     const allCount = Object.values(translations).reduce((sum, { results }) => sum + results.length, 0);
     const allCountString = allCount.pluralize(['совпадение', 'совпадения', 'совпадений'], 'ru');
 
@@ -104,7 +102,7 @@ async function run(
 
     const embedFields = Object.entries(fields)
         .map(([name, value]) => ({
-            name: `${name} (${value.length})`,
+            name: `${name} (${translations[name].results.length})`,
             value: value.join('\n'),
             inline: false
         }));
