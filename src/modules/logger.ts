@@ -6,7 +6,7 @@ import moment from 'moment';
 const colors = {
     log: 0xB2D5FF,
     error: 0xFF8E8E,
-    cmd: 0xD2FF8E
+    cmd: 0xB2D5FF
 };
 
 export class Logger {
