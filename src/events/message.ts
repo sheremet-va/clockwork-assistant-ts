@@ -96,7 +96,7 @@ export default async (
         return;
     }
 
-    client.logger.cmd(permLevel.name + ' ' + log(message));
+    client.logger.cmd(permLevel.name + ' ' + log(message), message);
 
     const info = await getInfo(client, cmd, message);
 

@@ -1,44 +1,27 @@
 import { MessageEmbed, TextChannel } from 'discord.js';
+import { AssistantMessage } from '../types';
 
-import { promisify } from 'util';
-import * as moment from 'moment';
-
-import * as fs from 'fs';
-import * as Path from 'path';
-
-const appendFile = promisify(fs.appendFile);
-const writeFile = promisify(fs.writeFile);
+import moment from 'moment';
+import Enmap from 'enmap';
 
 const colors = {
     log: 0xB2D5FF,
-    warn: 0xFFF7B2,
     error: 0xFF8E8E,
-    debug: 0xD2FF8E
+    cmd: 0xD2FF8E
 };
 
+const errors = new Enmap('logs_errors');
+const commands = new Enmap('logs_commands');
+
 export class Logger {
-    client: Assistant;
+    constructor(private client: Assistant) {}
 
-    constructor(assistant: Assistant) {
-        this.client = assistant;
-    }
-
-    private async write(content: string, type = 'log'): Promise<void> {
+    private async write(content: string, type: keyof typeof colors = 'log'): Promise<void> {
         const isTest = this.client.user ? this.client.user.id === '545503135200968708' : true;
         const channel = this.client.channels.cache.get('585174236398616577') as TextChannel;
 
         const timestamp = `[${moment().format('YYYY-MM-DD HH:mm:ss')}]:`;
-        const day = `${moment().format('YYYY-MM-DD')}`;
-        const path = Path.resolve(__dirname, `../logs/${day}-logs.txt`);
         const message = `${timestamp} (${type.toUpperCase()}) ${content}`;
-
-        try {
-            await appendFile(path, message + '\n');
-        }
-        catch (e) {
-            await writeFile(path, message + '\n')
-                .catch(console.error);
-        }
 
         console.log(message);
 
@@ -51,16 +34,33 @@ export class Logger {
         channel.send(embed);
     }
 
-    private embed(type: string, content: string): MessageEmbed {
+    private embed(type: keyof typeof colors, content: string): MessageEmbed {
         return new MessageEmbed()
-            .setColor(colors[type as keyof typeof colors] || 0xB2D5FF)
+            .setColor(colors[type] || 0xB2D5FF)
             .setDescription(`[${type.toUpperCase()}] ${content.substr(0, 1990)}`)
             .setTimestamp();
     }
 
     log = (...args: string[]): Promise<void> => this.write(args.join(' '), 'log');
-    error = (...args: string[]): Promise<void> => this.write(args.join(' '), 'error');
-    warn = (...args: string[]): Promise<void> => this.write(args.join(' '), 'warn');
-    debug = (...args: string[]): Promise<void> => this.write(args.join(' '), 'debug');
-    cmd = (...args: string[]): Promise<void> => this.write(args.join(' '), 'cmd');
+    error = (...args: string[]): Promise<void> => {
+        const message = args.join(' ');
+
+        errors.set(errors.autonum, {
+            message,
+            ts: new Date().valueOf()
+        });
+
+        return this.write(args.join(' '), 'error');
+    };
+    cmd = (description: string, message: AssistantMessage): Promise<void> => {
+        commands.set(commands.autonum, {
+            guildId: ({ id: null } || message.guild).id,
+            authorId: message.author.id,
+            command: message.command,
+            arguments: message.args,
+            ts: message.createdTimestamp
+        });
+
+        return this.write(description, 'cmd');
+    };
 }
