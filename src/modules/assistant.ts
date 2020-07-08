@@ -4,7 +4,7 @@ import { promisify } from 'util';
 
 import { AssistantMessage as Message, RequestInfo, AssistantMessage } from '../types';
 
-import * as prefixes from '../modules/prefixes';
+import Enmap from 'enmap';
 
 import { config } from '../config';
 import { Logger } from './logger';
@@ -14,6 +14,8 @@ import { Settings } from './subscriptions';
 import { Embed } from '../helpers/embed';
 
 const LIMIT_REPEAT_GET = 10;
+
+const prefixes = new Enmap<string, string>('prefixes');
 
 function build(logger: Logger): void {
     Object.defineProperty(String.prototype, 'capitalize', {
@@ -110,7 +112,7 @@ class AssistantBase extends Client {
     commands: Collection<string, Command>; // string, Command
     aliases: Collection<string, string>;
 
-    prefixes: Record<string, Record<'prefix', string>>; // TODO type
+    prefixes: Enmap<string, string>; // TODO type
 
     levelCache!: { [k: string]: number };
 
@@ -125,7 +127,7 @@ class AssistantBase extends Client {
         this.commands = new Collection();
         this.aliases = new Collection();
 
-        this.prefixes = prefixes.read();
+        this.prefixes = prefixes;
 
         this.wait = promisify(setTimeout);
 
@@ -221,11 +223,11 @@ class AssistantBase extends Client {
     };
 
     getPrefix = (ownerId: string): string => {
-        const settings = this.prefixes;
+        const prefixes = this.prefixes;
         const prefix = this.config.defaultSettings.prefix;
 
-        if (settings[ownerId]) {
-            return settings[ownerId].prefix || prefix;
+        if (prefixes.has(ownerId)) {
+            return prefixes.get(ownerId) || prefix;
         }
 
         return prefix;
