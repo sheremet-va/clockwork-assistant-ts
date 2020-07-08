@@ -92,7 +92,7 @@ async function run(
 
     embed
         .setTitle('Clockwork Assistant')
-        .setDescription(`**Clockwork Assistant ${version}** (by ${author}).` + translations.description)
+        .setDescription(`**Clockwork Assistant ${version}** (by ${author}). ` + translations.description)
         .addFields([
             ...fields,
             { name: translations.add_bot, value: addLink }
