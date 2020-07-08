@@ -16,6 +16,7 @@
         "@typescript-eslint/parser": "^2.30.0",
         "axios": "^0.19.2",
         "discord.js": "^12.0.1",
+        "enmap": "^5.3.1",
         "eslint": "^6.8.0",
         "fastify": "^2.12.1",
         "intl": "^1.2.5",
