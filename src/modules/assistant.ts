@@ -5,7 +5,6 @@ import { promisify } from 'util';
 import { AssistantMessage as Message, RequestInfo, AssistantMessage } from '../types';
 
 import * as prefixes from '../modules/prefixes';
-import * as analytics from '../modules/analytics';
 
 import { config } from '../config';
 import { Logger } from './logger';
@@ -256,7 +255,6 @@ class AssistantBase extends Client {
         const cleanUrl = settings.url.replace(this.config.back, 'TRUSTED');
 
         this.logger.log(`[REQ] ${cleanUrl} requested.`);
-        analytics.add(cleanUrl);
 
         const [, id] = /id=(\d+)/.exec(url) || [null, '0'];
         const prefix = this.getPrefix(id || '0');
