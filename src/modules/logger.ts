@@ -47,7 +47,7 @@ export class Logger {
 
         errors.set(errors.autonum, {
             message,
-            ts: new Date().valueOf()
+            date: new Date().valueOf()
         });
 
         return this.write(args.join(' '), 'error');
@@ -58,7 +58,7 @@ export class Logger {
             authorId: message.author.id,
             command: message.command,
             arguments: message.args,
-            ts: message.createdTimestamp
+            date: message.createdTimestamp
         });
 
         return this.write(description, 'cmd');

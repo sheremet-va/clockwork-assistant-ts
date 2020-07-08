@@ -5,10 +5,11 @@ import { Message, TextChannel } from 'discord.js';
 import { AssistantMessage, RequestInfo } from '../types';
 
 import * as subscriptions from '../helpers/subscriptions';
+import { unsubscribed } from '../modules/analytics';
 
 async function run(
     client: Assistant,
-    { channel, id }: AssistantMessage,
+    { channel, id, guild }: AssistantMessage,
     _info: RequestInfo,
     [name = '']
 ): Promise<Message | false> {
@@ -23,6 +24,8 @@ async function run(
         name,
         'unsub'
     );
+
+    unsubscribed(name, { channelId: channel.id, guildId: ({ id: null } || guild).id });
 
     return channel.send(embed);
 }
