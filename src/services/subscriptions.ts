@@ -1,7 +1,7 @@
 import { ErrorEmbed } from '../modules/error';
 import { Subscriptions, NotifyData } from '../modules/subscriptions';
 
-import * as fastify from 'fastify';
+import fastify from 'fastify';
 
 const app = fastify();
 
@@ -124,7 +124,7 @@ function init(
                     return await post(client, request, controller, name);
                 } catch (e) {
                     console.log(e);
-                    client.logger.error(e.message);
+                    client.logger.error('SubscriptionsError', e.message, e.stack);
 
                     // reply.code(500); // hmmm
 

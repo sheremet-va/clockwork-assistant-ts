@@ -122,7 +122,7 @@ class Subscriptions {
             const message = builder(settings, guild.id);
 
             if (!message) {
-                this.client.logger.error(`No message for ${this.name} (${guild.id}).`);
+                this.client.logger.error('SubscriptionsError', `No message for ${this.name} (${guild.id}).`);
 
                 return total;
             }
@@ -138,9 +138,9 @@ class Subscriptions {
                 .map(async ({ channel }) => {
                     // дописать
                     channel.send(message)
-                        .catch(err => this.client.logger.error(
-                            `[SUB_ERROR] ${channel.name} (${guild.id}): ` + err)
-                        );
+                        .catch(err => {
+                            this.client.logger.error('SubscriptionsError', `${channel.name} (${guild.id}): ` + err);
+                        });
                 });
 
             return total + allowed.length;
@@ -151,7 +151,7 @@ class Subscriptions {
 
     filter({ channel, id, guild }: GuildChannel, settings: Settings): boolean {
         if (!channel) {
-            this.client.logger.error(`Channel ${id} from '${guild.name}' doesn't exist.`);
+            this.client.logger.error('SubscriptionsError', `Channel ${id} from '${guild.name}' doesn't exist.`);
 
             this.emit('referenceError', { id, guild });
 
@@ -174,6 +174,7 @@ class Subscriptions {
             })
             .map(({ permission }) => {
                 this.client.logger.error(
+                    'SubscriptionsError',
                     `Channel ${channel.name} (${id}) from '${guild.name}' doesn't have permission '${permission}' or doesn't include me!`
                 );
 

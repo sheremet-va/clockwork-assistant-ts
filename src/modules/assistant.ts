@@ -65,10 +65,9 @@ function build(logger: Logger): void {
     });
 
     process.on('uncaughtException', err => {
-        const message = err.stack || err.message;
-        const errorMsg = message.replace(new RegExp(`${__dirname}/`, 'g'), './');
+        const errorMsg = (err.stack || '').replace(new RegExp(`${__dirname}/`, 'g'), './');
 
-        logger.error(`Uncaught Exception: ${errorMsg}\nИСПРАВЬ!`);
+        logger.error('Uncaught Exception', err.message, errorMsg);
     });
 
     process.on('unhandledRejection', (err: unknown) => {
@@ -77,19 +76,21 @@ function build(logger: Logger): void {
 
             return err.channel
                 ? err.channel.send(new ErrorEmbed(message))
-                : logger.error('ClientError: ' + message);
+                : logger.error('ClientError', message);
         }
 
         if(err instanceof Error) {
-            const message = err.stack || err.message;
+            const message = err.message;
 
             return logger.error(
-                `Unhandled rejection: ${message.replace(new RegExp(`${__dirname}/`, 'g'), './')}`
+                'Unhandled rejection',
+                message.replace(new RegExp(`${__dirname}/`, 'g'), './'),
+                err.stack
             );
         }
     });
 
-    process.on('warning', err => logger.error(err.stack || err.message));
+    process.on('warning', err => logger.error('warning', err.message, err.stack));
 }
 
 interface Conf {
@@ -271,6 +272,7 @@ class AssistantBase extends Client {
                 }
 
                 this.logger.error(
+                    'ClientError',
                     `[${tries} try] Error at client.request "${url}": ${err.message}`
                 );
 

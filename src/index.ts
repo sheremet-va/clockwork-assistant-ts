@@ -71,7 +71,7 @@ const init = async (): Promise<void> => {
     const subscriptions = await Promise.all(subsPromises)
         .then(subs => subs.filter(notUndefined))
         .catch(err => {
-            client.logger.error(err);
+            client.logger.error('ClientError', err);
 
             process.exit(1);
         });

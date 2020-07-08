@@ -2,16 +2,12 @@ import { MessageEmbed, TextChannel } from 'discord.js';
 import { AssistantMessage } from '../types';
 
 import moment from 'moment';
-import Enmap from 'enmap';
 
 const colors = {
     log: 0xB2D5FF,
     error: 0xFF8E8E,
     cmd: 0xD2FF8E
 };
-
-const errors = new Enmap('logs_errors');
-const commands = new Enmap('logs_commands');
 
 export class Logger {
     constructor(private client: Assistant) {}
@@ -42,24 +38,38 @@ export class Logger {
     }
 
     log = (...args: string[]): Promise<void> => this.write(args.join(' '), 'log');
-    error = (...args: string[]): Promise<void> => {
-        const message = args.join(' ');
+    error = (type: string, message: string, stack?: string): Promise<void> => {
+        this.client.request({
+            method: 'POST' as const,
+            url: '/logs/error?id=333',
+            data: {
+                message,
+                type,
+                stack,
+                date: new Date().valueOf()
+            },
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        }, null, '1.0.0').catch(console.error);
 
-        errors.set(errors.autonum, {
-            message,
-            date: new Date().valueOf()
-        });
-
-        return this.write(args.join(' '), 'error');
+        return this.write(`${type}: ${message}`, 'error');
     };
     cmd = (description: string, message: AssistantMessage): Promise<void> => {
-        commands.set(commands.autonum, {
-            guildId: ({ id: null } || message.guild).id,
-            authorId: message.author.id,
-            command: message.command,
-            arguments: message.args,
-            date: message.createdTimestamp
-        });
+        this.client.request({
+            method: 'POST' as const,
+            url: '/logs/command?id=333',
+            data: {
+                guildId: ({ id: null } || message.guild).id,
+                authorId: message.author.id,
+                command: message.command,
+                arguments: message.args,
+                ts: message.createdTimestamp
+            },
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        }, null, '1.0.0').catch(console.error);
 
         return this.write(description, 'cmd');
     };
