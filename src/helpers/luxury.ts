@@ -2,10 +2,10 @@ import { Settings } from '../modules/subscriptions';
 import { Embed } from '../helpers/embed';
 import { RequestInfo, language } from '../types';
 
-import * as moment from 'moment-timezone';
-import * as Intl from 'intl';
+import moment from 'moment-timezone';
+import Intl from 'intl';
 
-import * as utils from '../helpers/utils';
+// import * as utils from '../helpers/utils';
 
 type Name = {
     ru: string;

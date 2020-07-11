@@ -7,11 +7,6 @@ const app = fastify();
 
 const PORT = 3007;
 
-const CACHED = {
-    ru: {},
-    en: {}
-} as Record<'ru' | 'en', Record<string, string>>;
-
 function handle(client: Assistant, subscriptions: Subscriptions): void {
     subscriptions.on('referenceError', async function (this: Subscriptions, { id, guild }) {
         const options = {
@@ -32,7 +27,7 @@ function handle(client: Assistant, subscriptions: Subscriptions): void {
         client.logger.log(`Channel ${id} from '${guild.name}' was unsubed (actually in wasn't).`);
     });
 
-    subscriptions.on('permissionError', async ({ permission, channel, guild, settings }) => {
+    subscriptions.on('permissionError', async ({ permission, channel, guild }) => {
         if(!guild.owner) {
             return;
         }
@@ -41,10 +36,8 @@ function handle(client: Assistant, subscriptions: Subscriptions): void {
         const pathError = `/translations/errors/errors/${error}?id=${guild.id}`;
         const pathNames = `/translations/subscriptions/permissions/${permission}?id=${guild.id}`;
 
-        const cached = CACHED[settings.language];
-
-        const { translations: errorString } = (error in cached ? { translations: cached[error] } : await client.request(pathError, null, '1.0'));
-        const { translations: name } = (permission in cached ? { translations: cached[permission] } : await client.request(pathNames, null, '1.0'));
+        const { translations: errorString } = await client.request(pathError, null, '1.0');
+        const { translations: name } = await client.request(pathNames, null, '1.0');
 
         const render = {
             guild: guild.name,
@@ -52,9 +45,7 @@ function handle(client: Assistant, subscriptions: Subscriptions): void {
             permission: name
         };
 
-        cached[permission] = name;
-
-        const message = cached[error] = errorString;
+        const message = errorString;
 
         const embed = new ErrorEmbed(message.render(render));
 
@@ -77,7 +68,11 @@ async function post(
     name: string
 ): Promise<{ status: string }> {
     if (!request.body) {
-        return { status: 'fail' };
+        throw new Error('No body recieved.');
+    }
+
+    if(request.body.token !== client.config.back) {
+        throw new Error('Invalid token.');
     }
 
     const {
@@ -87,7 +82,7 @@ async function post(
         settings
     } = request.body;
 
-    console.dir(request.body, {depth: null});
+    client.logger.log(`[SUB] ${name} sent body:\n${JSON.stringify({ ...request.body, token: 'TRUSTED' })}`);
 
     if (!subscribers || !Object.keys(subscribers).length) {
         throw new Error('No subscribers recieved.');
@@ -123,7 +118,6 @@ function init(
                 try {
                     return await post(client, request, controller, name);
                 } catch (e) {
-                    console.log(e);
                     client.logger.error('SubscriptionsError', e.message, e.stack);
 
                     // reply.code(500); // hmmm

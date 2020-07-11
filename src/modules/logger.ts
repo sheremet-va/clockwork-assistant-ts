@@ -1,7 +1,14 @@
 import { MessageEmbed, TextChannel } from 'discord.js';
 import { AssistantMessage } from '../types';
 
+import { promisify } from 'util';
 import moment from 'moment';
+
+import * as fs from 'fs';
+import * as Path from 'path';
+
+const appendFile = promisify(fs.appendFile);
+const writeFile = promisify(fs.writeFile);
 
 const colors = {
     log: 0xB2D5FF,
@@ -21,6 +28,19 @@ export class Logger {
 
         console.log(message);
 
+        if(type === 'log') {
+            const day = `${moment().format('YYYY-MM-DD')}`;
+            const path = Path.resolve(__dirname, `../logs/${day}-logs.txt`);
+
+            try {
+                await appendFile(path, message + '\n');
+            }
+            catch (e) {
+                await writeFile(path, message + '\n')
+                    .catch(console.error);
+            }
+        }
+
         if (isTest) {
             return;
         }
@@ -38,12 +58,18 @@ export class Logger {
     }
 
     log = (...args: string[]): Promise<void> => this.write(args.join(' '), 'log');
-    error = (type: string, message: string, stack?: string): Promise<void> => {
+    error = (type: string, message: string, stack?: string): void => {
+        this.write(`${type}: ${message + (stack || '')}`, 'error');
+
+        if(type === 'ClientError') {
+            return;
+        }
+
         this.client.request({
             method: 'POST' as const,
             url: '/logs/error?id=333',
             data: {
-                message,
+                message: message.split('\n')[0] || message,
                 type,
                 stack,
                 date: new Date().valueOf()
@@ -51,26 +77,24 @@ export class Logger {
             headers: {
                 'Content-Type': 'application/json',
             }
-        }, null, '1.0.0').catch(console.error);
-
-        return this.write(`${type}: ${message}`, 'error');
+        }, null, '1.0.0').catch(err => this.log(err.description || err.message));
     };
-    cmd = (description: string, message: AssistantMessage): Promise<void> => {
+    cmd = (description: string, message: AssistantMessage): void => {
         this.client.request({
             method: 'POST' as const,
             url: '/logs/command?id=333',
             data: {
-                guildId: ({ id: null } || message.guild).id,
+                guildId: (message.guild || { id: null }).id,
                 authorId: message.author.id,
                 command: message.command,
                 arguments: message.args,
-                ts: message.createdTimestamp
+                date: message.createdTimestamp
             },
             headers: {
                 'Content-Type': 'application/json',
             }
-        }, null, '1.0.0').catch(console.error);
+        }, null, '1.0.0').catch(err => this.log(err.description || err.message));
 
-        return this.write(description, 'cmd');
+        this.write(description, 'cmd');
     };
 }

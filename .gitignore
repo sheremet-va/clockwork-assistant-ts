@@ -2,8 +2,11 @@ src/config.js
 src/token.json
 
 dist/
+data/
 
 src/configs/*
 src/logs/*
 
 node_modules/*
+
+.DS_Store

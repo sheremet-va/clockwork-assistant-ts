@@ -12,6 +12,7 @@ import { version, author } from '../../package.json';
 
 type Command = {
     name: string;
+    title: string;
     aliases: string[];
     category: string;
     usage: string;
@@ -55,34 +56,43 @@ async function run(
             name,
             aliases,
             usage,
+            title,
             description
         } = command;
 
-        const names = aliases.map(alias => prefix + alias).join(', ');
+        const names = [...aliases, name].filter(alias => alias !== title).map(alias => prefix + alias).join(', ');
+        const usages = usage.split('\n').map(name => prefix + name).join('\n');
 
         embed
-            .setTitle(translations.title.render({ command: name }))
+            .setTitle(translations.title.render({ command: title }))
             .setDescription(description)
-            .addFields([
-                { name: translations.usage, value: prefix + usage, inline: false },
-                { name: translations.aliases, value: names, inline: false }
-            ]);
+            .addField(translations.usage, usages);
+
+        if(names.length) {
+            embed.addField(translations.aliases, names);
+        }
 
         return channel.send(embed);
     }
 
-    const commands = data.reduce((result, cmd) => {
-        const category = cmd.category;
+    const commands = data
+        .filter(({ name }) => {
+            const cmd = client.commands.get(name);
 
-        return {
-            ...result,
-            [category]: [...(result[category] || []), cmd]
-        };
-    }, {} as Record<string, Command[]>);
+            return cmd?.conf.enabled && cmd.conf.helpShown;
+        })
+        .reduce((result, cmd) => {
+            const category = cmd.category || 'Test';
+
+            return {
+                ...result,
+                [category]: [...(result[category] || []), cmd]
+            };
+        }, {} as Record<string, Command[]>);
 
     const fields = entries(commands).map(([category, cmds]) => {
         const description = cmds
-            .map(cmd => `**${prefix}${cmd.name}**: ${cmd.description.toLowerFirst()}`)
+            .map(cmd => `**${prefix}${cmd.title}**: ${cmd.description.toLowerFirst()}`)
             .join('\n');
 
         return { name: category, value: description, inline: false };
@@ -92,7 +102,7 @@ async function run(
 
     embed
         .setTitle('Clockwork Assistant')
-        .setDescription(`**Clockwork Assistant ${version}** (by ${author}). ` + translations.description)
+        .setDescription(`**Clockwork Assistant ${version}** (by ${author}). ` + translations.description.render({ prefix }))
         .addFields([
             ...fields,
             { name: translations.add_bot, value: addLink }

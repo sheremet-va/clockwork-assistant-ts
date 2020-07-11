@@ -76,7 +76,7 @@ function build(logger: Logger): void {
 
             return err.channel
                 ? err.channel.send(new ErrorEmbed(message))
-                : logger.error('ClientError', message);
+                : logger.error('ClientErrorRejection', message);
         }
 
         if(err instanceof Error) {
@@ -235,7 +235,7 @@ class AssistantBase extends Client {
     };
 
     request = async (
-        options: AxiosRequestConfig | string,
+        options: (AxiosRequestConfig & { cache?: boolean }) | string,
         channel: TextChannel | DMChannel | null,
         version: string,
         tries = 1
@@ -273,7 +273,7 @@ class AssistantBase extends Client {
 
                 this.logger.error(
                     'ClientError',
-                    `[${tries} try] Error at client.request "${url}": ${err.message}`
+                    `[${tries} try] Error at client.request "${cleanUrl}": ${err.message}`
                 );
 
                 await this.wait(1000);

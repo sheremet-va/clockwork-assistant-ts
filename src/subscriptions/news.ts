@@ -17,7 +17,7 @@ export default class extends Subscriptions {
         super(client, info, 'news');
     }
 
-    notify(): void {
+    async notify(): Promise<void> {
         this.send(({ newsLang }) => {
             const {
                 title,

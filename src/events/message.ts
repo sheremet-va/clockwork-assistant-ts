@@ -1,27 +1,55 @@
 // Событие MESSAGE запускается каждый раз, когда кто-то отправляет сообщение.
 
-import { AssistantMessage } from '../types';
-import { TextChannel, Message, User } from 'discord.js';
+import { TextChannel, Message, BitFieldResolvable, PermissionString } from 'discord.js';
 
-function checkPermissions(channel: TextChannel, bot: User): boolean {
-    const permissions = channel.permissionsFor(bot.id);
+import { AssistantMessage } from '../types';
+import { ErrorEmbed } from '../modules/error';
+
+async function checkPermissions(client: Assistant, message: AssistantMessage): Promise<boolean> {
+    const channel = message.channel as TextChannel;
+    const permissions = channel.permissionsFor(client.user!.id);
 
     if(!permissions) {
         return false;
     }
 
-    if (!permissions.has('EMBED_LINKS', false)) {
-        // client.logger.error( `У бота нет прав отправлять ссылки в канал «${message.channel.name}» (${message.channel.id}) в гильдии «${message.guild.name}» (${message.guild.id}). Владельцу (${message.guild.owner.user.tag}) отправлено сообщение.` );
-        // if ( level > 2 ) return message.guild.owner.send( `Возникла ошибка при попытке отправить сообщение в канал «${message.channel.name}» в гильдии «${message.guild.name}». Пожалуйста, если вы не хотите больше видеть это сообщение, выдайте боту права «Встраивать ссылки» в канале «${message.channel.name}».` );
-        return false;
-    }
-    else if (!permissions.has('SEND_MESSAGES', false)) {
-        // client.logger.error( `У бота нет прав отправлять сообщения в канал «${message.channel.name}» (${message.channel.id}) в гильдии «${message.guild.name}» (${message.guild.id}). Владельцу (${message.guild.owner.user.tag}) отправлено сообщение.` );
-        // if ( level > 2 ) return message.guild.owner.send( `Возникла ошибка при попытке отправить сообщение в канал «${message.channel.name}» в гильдии «${message.guild.name}». Пожалуйста, если вы не хотите больше видеть это сообщение, выдайте боту права «Отправлять сообщения» в канале «${message.channel.name}».` );
-        return false;
+    const names = ['EMBED_LINKS', 'SEND_MESSAGES'] as BitFieldResolvable<PermissionString>[];
+
+    const disabled = names.find(name => !permissions.has(name, false));
+
+    if(!disabled) {
+        return true;
     }
 
-    return true;
+    const isAdmin = message.author.permLevel > 2;
+
+    const subject = `'${message.channel.id}' channel in '${message.guild!.id}' guild`;
+    const notice = isAdmin ? ` ${message.author.tag} got a message.` : '';
+
+    client.logger.error('MessageError', `${subject} doesn't have '${disabled}' permission.${notice}`);
+
+    if(isAdmin) {
+        const guild = message.guild!;
+
+        const error = 'PERMISSION_MESSAGE';
+        const pathError = `/translations/errors/errors/${error}?id=${guild.id}`;
+        const pathNames = `/translations/subscriptions/permissions/${disabled}?id=${guild.id}`;
+
+        const { translations: errorString } = await client.request(pathError, null, '1.0');
+        const { translations: name } = await client.request(pathNames, null, '1.0');
+
+        const render = {
+            guild: guild.name,
+            channel: channel.name,
+            permission: name
+        };
+
+        const embed = new ErrorEmbed(errorString.render(render));
+
+        await message.author.send(embed);
+    }
+
+    return false;
 }
 
 function log(message: AssistantMessage): string {
@@ -84,14 +112,14 @@ export default async (
     const level = client.permlevel(message);
     message.author.permLevel = level;
 
-    if (message.guild && !checkPermissions(message.channel as TextChannel, bot)) {
+    if (message.guild && !await checkPermissions(client, message)) {
         return;
     }
 
     const permLevel = client.config.permLevels.find(l => l.level === level);
 
     if(!permLevel) {
-        client.logger.error(`No permission found for ${command} command: ${level}.`);
+        client.logger.error('PermError', `No permission found for ${command} command: ${level}.`);
 
         return;
     }
@@ -103,7 +131,6 @@ export default async (
     const result = await cmd.run(client, message, info, args);
 
     if (typeof result === 'boolean' && !result) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const helpCmd = client.commands.get('help')!;
 
         helpCmd.run(client, message, info, [command]);

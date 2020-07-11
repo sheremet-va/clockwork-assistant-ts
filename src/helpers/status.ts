@@ -1,6 +1,6 @@
 import { Embed, Color } from '../helpers/embed';
 
-import * as moment from 'moment';
+import moment from 'moment';
 
 import { Settings } from '../modules/subscriptions';
 import { EmbedField } from 'discord.js';

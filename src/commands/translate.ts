@@ -101,11 +101,16 @@ async function run(
     const fields = buildFields(translations);
 
     const embedFields = Object.entries(fields)
-        .map(([name, value]) => ({
-            name: `${name} (${translations[name].results.length})`,
-            value: value.join('\n'),
-            inline: false
-        }));
+        .map(([name, value]) => {
+            const category = Object.values(translations).find(({ plural }) => plural === name);
+            const title = category ? `${name} (${category.results.length})` : name;
+
+            return {
+                name: title,
+                value: value.join('\n'),
+                inline: false
+            };
+        });
 
     embed.addFields(embedFields);
 

@@ -25,17 +25,7 @@ function guildDelete(guildId: string): void {
     ensure('guildDelete', { guildId });
 }
 
-function subscribed(name: string, target: Target): void {
-    ensure('subscribed', { ...target, name });
-}
-
-function unsubscribed(name: string, target: Target): void {
-    ensure('unsubscribed', { ...target, name });
-}
-
 export {
     guildCreate,
-    guildDelete,
-    subscribed,
-    unsubscribed
+    guildDelete
 };

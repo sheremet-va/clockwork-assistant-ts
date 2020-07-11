@@ -4,9 +4,15 @@ import { Message } from 'discord.js';
 
 import { AssistantMessage } from '../types';
 import { Embed } from '../helpers/embed';
-import { entries } from '../helpers/utils';
 
-// import * as subscriptions from '../helpers/subscriptions';
+import {
+    SubscriptionDescription,
+    ApiSubscriptions,
+    ApiTranslations,
+    allowed
+} from '../helpers/subscriptions';
+
+import { notUndefined } from '../helpers/utils';
 
 function findSub(
     name: string,
@@ -21,20 +27,6 @@ function findSub(
     });
 }
 
-interface SubscriptionDescription {
-    title: string;
-    description: string;
-    name: string;
-    aliases: string[];
-}
-
-type ApiSubscriptions = Record<string, string[]>;
-
-type ApiTranslations = Record<string, string> & {
-    subscriptions: SubscriptionDescription[];
-    groups: Record<string, string[]>;
-}
-
 interface RecievedData {
     data: ApiSubscriptions;
     translations: ApiTranslations;
@@ -47,7 +39,7 @@ interface RecievedData {
 
 async function run(
     _: Assistant,
-    { channel, settings: { prefix } }: AssistantMessage,
+    { channel, settings: { prefix, language } }: AssistantMessage,
     { data, translations }: RecievedData,
     [name]: [string | undefined]
 ): Promise<Message> {
@@ -75,38 +67,26 @@ async function run(
         .map(([name]) => name); // subs names
 
     if (!channelSubs.length) {
-        const fields = entries(translations.groups).map(([name, subscriptions]) => {
-            return {
-                name,
-                value: subscriptions.map(code => {
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    const subscription = translations.subscriptions.find(sub => sub.name === code)!;
-
-                    return subscription.title;
-                }).join('\n'),
-                inline: true
-            };
-        });
-
-        const embed = new Embed(
-            {
-                author: translations.title,
-                description: `${translations.no_subscriptions} ${translations.to_subscribe.render({ prefix })}`,
-                fields,
-                color: 'subscriptions'
-            }
-        );
+        const embed = allowed(translations, prefix);
 
         return channel.send(embed);
     }
 
     const description = channelSubs
         .map(name => {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const { title, description } = translations.subscriptions.find(s => s.name === name)!;
+            const subscription = translations.subscriptions.find(s => s.name === name);
 
-            return `• **${title}**: ${description.toLowerFirst()}`;
+            if(!subscription) {
+                return;
+            }
+
+            const { title, description } = subscription;
+
+            const formatted = language === 'ru' ? description.toLowerFirst() : description;
+
+            return `• **${title}**: ${formatted}`;
         })
+        .filter(notUndefined)
         .join('\n');
 
     const embed = new Embed({
