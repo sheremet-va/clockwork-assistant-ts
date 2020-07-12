@@ -1,11 +1,13 @@
 import { MessageReaction, User } from 'discord.js';
 
-export default (
-    client: Assistant,
-    reaction: MessageReaction,
-    user: User
-): void => {
-    console.log('Emoji: ' + reaction.emoji.name);
-    console.log('Message: ' + reaction.message.id);
-    console.log('User: ' + user.id);
-};
+function event(
+    _client: Assistant,
+    _reaction: MessageReaction,
+    _user: User
+): void {
+    // console.log('Emoji: ' + reaction.emoji.name);
+    // console.log('Message: ' + reaction.message.id);
+    // console.log('User: ' + user.id);
+}
+
+export { event };

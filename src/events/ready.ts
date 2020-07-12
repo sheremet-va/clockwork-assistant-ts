@@ -1,6 +1,6 @@
 import * as activity from '../helpers/activity';
 
-export default (client: Assistant): void => {
+function event(client: Assistant): void {
     const botUser = client.user || { tag: 'Assistant' };
 
     client.logger.log(
@@ -8,4 +8,6 @@ export default (client: Assistant): void => {
     );
 
     activity.random(client);
-};
+}
+
+export { event };

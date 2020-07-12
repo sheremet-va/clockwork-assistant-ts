@@ -15,7 +15,7 @@ interface Packet {
 
 const MANAGERS_CHANNEL_ID = '556096313968689173';
 // REFACTOR
-export default async (client: Assistant, packet: Packet): Promise<void> => {
+async function event(client: Assistant, packet: Packet): Promise<void> {
     if (packet.t !== 'MESSAGE_REACTION_ADD') {
         return;
     }
@@ -47,4 +47,6 @@ export default async (client: Assistant, packet: Packet): Promise<void> => {
     if (reaction && user) reaction.users.cache.set(packet.d.user_id, user);
 
     client.emit('messageReactionAdd', reaction, user);
-};
+}
+
+export { event };

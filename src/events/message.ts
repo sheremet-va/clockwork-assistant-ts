@@ -68,10 +68,10 @@ async function getInfo(client: Assistant, cmd: { conf: { path?: string } }, mess
         : {};
 }
 
-export default async (
+async function event(
     client: Assistant,
     message: AssistantMessage
-): Promise<Message | undefined> => {
+): Promise<Message | undefined> {
     const bot = client.user;
 
     if (!bot || message.author.bot) return;
@@ -145,4 +145,6 @@ export default async (
             customCmd.run(client, message, info, args);
         }
     }
-};
+}
+
+export { event };
