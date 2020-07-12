@@ -53,7 +53,7 @@ const init = async (): Promise<void> => {
     evtFiles.forEach(async file => {
         const eventName = file.split('.')[0];
 
-        if(skipEvts.includes(eventName)) {
+        if(skipEvts.includes(eventName) || file.includes('map')) {
             return;
         }
 
