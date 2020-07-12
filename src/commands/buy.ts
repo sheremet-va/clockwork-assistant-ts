@@ -55,7 +55,7 @@ async function run(): Promise<true> {
 }
 
 const conf: Configuration = {
-    enabled: true,
+    enabled: false,
     guildOnly: false,
     helpShown: true,
     permLevel: 'User',
