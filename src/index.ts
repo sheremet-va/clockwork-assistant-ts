@@ -3,8 +3,8 @@
 import { Assistant } from './modules/assistant';
 import { get as getCommands } from './modules/commands';
 
+import { readdir as readSync, existsSync, mkdirSync } from 'fs';
 import { promisify } from 'util';
-import { readdir as readSync } from 'fs';
 import * as Path from 'path';
 
 import { notUndefined } from './helpers/utils';
@@ -12,6 +12,19 @@ import { notUndefined } from './helpers/utils';
 import * as Subscriptions from './services/subscriptions';
 
 const readdir = promisify(readSync);
+
+const names = [
+    'logs',
+    'configs'
+];
+
+names.forEach(name => {
+    const folderPath = `${__dirname}/${name}`;
+
+    if (!existsSync(folderPath)){
+        mkdirSync(folderPath);
+    }
+});
 
 const client = new Assistant();
 
