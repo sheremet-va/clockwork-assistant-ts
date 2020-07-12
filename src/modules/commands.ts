@@ -6,10 +6,14 @@ import { Command } from '../types';
 const path = Path.resolve(__dirname, '../configs', 'commands.json');
 
 function read(): Command[] {
-    const file = fs.readFileSync(path, 'utf8');
-    const commands = JSON.parse(file);
+    try {
+        const file = fs.readFileSync(path, 'utf8');
+        const commands = JSON.parse(file);
 
-    return commands;
+        return commands;
+    } catch(err) {
+        return [];
+    }
 }
 
 function clean(): void {
