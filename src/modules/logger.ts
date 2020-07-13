@@ -100,10 +100,11 @@ export class Logger {
         }, null, '1.0.0').catch(err => this.log(err.description || err.message));
 
         const args = message.args.length ? ` с аргументами ${message.args.join(', ')}` : '';
+        const channel = message.channel.type === 'dm' ? 'в DM' : `в канале «${message.channel.name}»`;
 
         const embed = new MessageEmbed()
             .setColor(0x96D5A9)
-            .setDescription(`${message.author.permLevelName} ${message.author.tag} запускает команду «${message.command}»${args}.`)
+            .setDescription(`${message.author.permLevelName} запускает ${channel} команду «${message.command}»${args}.`)
             .setAuthor(message.author.tag, message.author.avatarURL() || '')
             .setFooter((message.guild || { name: 'DM' }).name, message?.guild?.iconURL() || '')
             .setTimestamp();

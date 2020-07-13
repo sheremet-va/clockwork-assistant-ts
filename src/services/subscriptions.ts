@@ -49,6 +49,7 @@ function handle(client: Assistant, subscriptions: Subscriptions): void {
 
         const embed = new ErrorEmbed(message.render(render));
 
+        // TODO add catch
         guild.owner.send(embed);
     });
 }
@@ -82,7 +83,7 @@ async function post(
         settings
     } = request.body;
 
-    client.logger.log(`[SUB] ${name} sent body:\n${JSON.stringify({ ...request.body, token: 'TRUSTED' })}`);
+    client.logger.log(`[SUB] ${name} recieved.`);
 
     if (!subscribers || !Object.keys(subscribers).length) {
         throw new Error('No subscribers recieved.');
