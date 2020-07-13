@@ -36,7 +36,7 @@ const groups: Record<Platform, Group> = {
         maintenance: 'pc'
     },
     ps: {
-        aliases: ['пс', 'плейстейшн'],
+        aliases: ['пс', 'плейстейшн', 'ps4', 'PS4', 'PlayStation'],
         servers: ['ps_eu', 'ps_us'],
         maintenance: 'ps'
     },
@@ -104,10 +104,16 @@ const run = async (
         return channel.send(message);
     }
 
-    const [server] = Object.entries(aliases)
+    const serverEntry = Object.entries(aliases)
         .find(([key, aliases]) =>
             regServer.test(key) || aliases.some(alias => regServer.test(alias))
         ) as [keyof Statuses, string[]];
+
+    if(serverEntry) {
+        return false;
+    }
+
+    const server = serverEntry[0];
 
     if(!server) {
         return false;
