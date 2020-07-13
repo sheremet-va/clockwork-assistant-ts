@@ -42,7 +42,7 @@ export class Logger {
             }
         }
 
-        if (isTest || type === 'req') {
+        if (isTest || message.includes('REQ')) {
             return;
         }
 
