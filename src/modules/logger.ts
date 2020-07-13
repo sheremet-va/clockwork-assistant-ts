@@ -20,7 +20,7 @@ const colors = {
 export class Logger {
     constructor(private client: Assistant) {}
 
-    private async write(content: string, type: keyof typeof colors = 'log'): Promise<void> {
+    private async write(content: string, type: keyof typeof colors = 'log', cmdEmbed: MessageEmbed | null = null): Promise<void> {
         const isTest = this.client.user ? this.client.user.id === '545503135200968708' : true;
         const channel = this.client.channels.cache.get('585174236398616577') as TextChannel;
 
@@ -46,9 +46,9 @@ export class Logger {
             return;
         }
 
-        const embed = this.embed(type, content);
+        const embed = cmdEmbed || this.embed(type, content);
 
-        channel.send(embed);
+        channel?.send(embed);
     }
 
     private embed(type: keyof typeof colors, content: string): MessageEmbed {
@@ -81,21 +81,33 @@ export class Logger {
         }, null, '1.0.0').catch(err => this.log(err.description || err.message));
     };
     cmd = (description: string, message: AssistantMessage): void => {
+        const options = {
+            guildId: (message.guild || { id: null }).id,
+            authorId: message.author.id,
+            channelId: message.channel.id,
+            command: message.command,
+            arguments: message.args,
+            date: message.createdTimestamp
+        };
+
         this.client.request({
             method: 'POST' as const,
             url: '/logs/command?id=333',
-            data: {
-                guildId: (message.guild || { id: null }).id,
-                authorId: message.author.id,
-                command: message.command,
-                arguments: message.args,
-                date: message.createdTimestamp
-            },
+            data: options,
             headers: {
                 'Content-Type': 'application/json',
             }
         }, null, '1.0.0').catch(err => this.log(err.description || err.message));
 
-        this.write(description, 'cmd');
+        const args = message.args.length ? ` с аргументами ${message.args.join(', ')}.` : '';
+
+        const embed = new MessageEmbed()
+            .setColor(0x96D5A9)
+            .setDescription(`${message.author.permLevelName} ${message.author.tag} запускает команду ${message.command}${args}.`)
+            .setAuthor(message.author.tag, message.author.avatarURL() || '')
+            .setFooter((message.guild || { name: 'DM' }).name, message?.guild?.iconURL() || '')
+            .setTimestamp();
+
+        this.write(description, 'cmd', embed);
     };
 }

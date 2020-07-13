@@ -3,6 +3,7 @@ import { Settings } from './modules/subscriptions';
 
 class AssistantUser extends User {
     permLevel!: number;
+    permLevelName!: string;
 }
 
 export class AssistantMessage extends Message {

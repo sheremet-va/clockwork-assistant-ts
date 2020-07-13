@@ -127,6 +127,7 @@ async function event(
 
         return;
     }
+    message.author.permLevelName = permLevel.name;
 
     client.logger.cmd(permLevel.name + ' ' + log(message), message);
 
