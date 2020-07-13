@@ -215,7 +215,9 @@ async function embed(
     const title = getTitle(translations, fields, language);
     const maintenance = Object.entries(data.maintenance) as [Platform, Render][];
 
-    if (maintenance.length) {
+    const someDown = fields.some(({ value }) => value.includes(':x:'));
+
+    if (maintenance.length && someDown) {
         const description = buildMaintence(
             translate(translations.time, language),
             !isCommandMaintenance(data.maintenance)
@@ -233,7 +235,7 @@ async function embed(
         );
     }
 
-    const down = fields.some(({ value }) => /DOWN/i.test(value));
+    const down = fields.some(({ value }) => /:x:/i.test(value));
 
     const embed = {
         author: title,
