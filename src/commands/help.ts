@@ -34,7 +34,7 @@ type ApiResponse = {
 
 async function run(
     client: Assistant,
-    { channel, id }: AssistantMessage,
+    { channel, id, guild }: AssistantMessage,
     _info: RequestInfo,
     args: string[] = []
 ): Promise<Message | false> {
@@ -79,10 +79,10 @@ async function run(
         .filter(({ name }) => {
             const cmd = client.commands.get(name);
 
-            return cmd?.conf.enabled && cmd.conf.helpShown;
+            return cmd?.conf.enabled && cmd.conf.helpShown && (channel.type === 'text' || !cmd.conf.guildOnly);
         })
         .reduce((result, cmd) => {
-            const category = cmd.category || 'Test';
+            const category = cmd.category || 'Основная';
 
             return {
                 ...result,
