@@ -13,7 +13,8 @@ const writeFile = promisify(fs.writeFile);
 const colors = {
     log: 0xB2D5FF,
     error: 0xFF8E8E,
-    cmd: 0xB2D5FF
+    cmd: 0xB2D5FF,
+    req: 0xB2D5FF
 };
 
 export class Logger {
@@ -41,7 +42,7 @@ export class Logger {
             }
         }
 
-        if (isTest) {
+        if (isTest || type === 'req') {
             return;
         }
 
