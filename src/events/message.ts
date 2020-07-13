@@ -116,6 +116,10 @@ async function event(
         return;
     }
 
+    if(!message.guild && cmd.conf.guildOnly) {
+        return;
+    }
+
     const permLevel = client.config.permLevels.find(l => l.level === level);
 
     if(!permLevel) {
