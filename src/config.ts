@@ -66,7 +66,7 @@ const config: config = {
 
         {
             level: 8,
-            name: 'Support',
+            name: 'Bot Support',
             check: (message: Message): boolean => config.support.includes(message.author.id)
         },
 
