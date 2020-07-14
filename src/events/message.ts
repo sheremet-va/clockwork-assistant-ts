@@ -120,6 +120,10 @@ async function event(
         return;
     }
 
+    if(level < client.levelCache[cmd.conf.permLevel]) {
+        return;
+    }
+
     const permLevel = client.config.permLevels.find(l => l.level === level);
 
     if(!permLevel) {
@@ -127,6 +131,7 @@ async function event(
 
         return;
     }
+
     message.author.permLevelName = permLevel.name;
 
     client.logger.cmd(permLevel.name + ' ' + log(message), message);
