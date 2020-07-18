@@ -66,7 +66,8 @@ class Subscriptions {
 
     rights = [
         { permission: 'EMBED_LINKS' },
-        { permission: 'SEND_MESSAGES' }
+        { permission: 'SEND_MESSAGES' },
+        { permission: 'VIEW_CHANNEL' }
     ] as { permission: BitFieldResolvable<PermissionString> }[];
 
     guilds: AssistantGuild[]
@@ -141,7 +142,7 @@ class Subscriptions {
                     // дописать
                     channel.send(message)
                         .catch(err => {
-                            this.client.logger.error('SubscriptionsError', `${channel.name} (${guild.id}): ` + err);
+                            this.client.logger.error('SubscriptionsError', `${channel.name} (guildID: ${guild.id}): ` + err);
                         });
                 });
 
