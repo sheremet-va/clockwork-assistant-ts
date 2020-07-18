@@ -99,7 +99,7 @@ export class Logger {
             }
         }, null, '1.0.0').catch(err => this.log(err.description || err.message));
 
-        const args = message.args.length ? ` с аргументами ${message.args.join(', ')}` : '';
+        const args = message.args.length ? ` с аргументами ${message.args.join(' ')}` : '';
         const channel = message.channel.type === 'dm' ? 'в DM' : `в канале «${message.channel.name}»`;
 
         const embed = new MessageEmbed()
