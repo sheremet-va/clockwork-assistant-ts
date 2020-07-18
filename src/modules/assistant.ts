@@ -28,7 +28,7 @@ function build(logger: Logger): void {
     Object.defineProperty(String.prototype, 'render', {
         value(replaces: Record<string, string>) {
             return Object.entries(replaces).reduce((final, [replace, string]) => {
-                const replaceWord = new RegExp(`{{\\s+${replace}\\s+}}`, 'g');
+                const replaceWord = new RegExp(`{{\\s*${replace}\\s*}}`, 'g');
 
                 return final.replace(replaceWord, string);
             }, this);
@@ -157,7 +157,7 @@ class AssistantBase extends Client {
         return permlvl;
     };
 
-    awaitReply = async (msg: Message, question: string, limit = 60000): Promise<string | false> => {
+    awaitReply = async (msg: Message, question: string | Embed, limit = 60000): Promise<string | false> => {
         const filter = (m: Message): boolean => m.author.id === msg.author.id;
 
         await msg.channel.send(question);
@@ -289,7 +289,7 @@ class AssistantBase extends Client {
 }
 
 
-export type RenderObject = Record<string, Record<string, string>> | Record<string, string>;
+export type RenderObject = Record<string, Record<string, string>> | Record<string, any>;
 
 declare global {
     class Assistant extends AssistantBase { }
