@@ -25,7 +25,6 @@ const run = async (
         const clean = client.clean(evaled);
         return channel.send(`\`\`\`js\n${clean}\n\`\`\``);
     } catch (err) {
-        console.log(err);
         return channel.send(`\`ERROR\` \`\`\`xl\n${client.clean(err.message)}\n\`\`\``);
     }
 };

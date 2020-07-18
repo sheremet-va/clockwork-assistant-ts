@@ -48,7 +48,6 @@ async function embed(
 }
 
 function allowed(translations: ApiTranslations, prefix: string, subscribed = false): Embed {
-    console.log(translations.subscriptions);
     const fields = entries(translations.groups).map(([name, subscriptions]) => {
         return {
             name: translations[name] || name,
