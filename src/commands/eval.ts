@@ -16,10 +16,16 @@ const run = async (
     const code = args.join(' ');
 
     try {
-        const evaled = JSON.stringify(eval(code), null, 4);
+        const result = args[0] === 'request'
+            ? await client.request(args[1], null, '1.0')
+            : eval(code);
+
+        const evaled = JSON.stringify(result, null, 4);
+
         const clean = client.clean(evaled);
         return channel.send(`\`\`\`js\n${clean}\n\`\`\``);
     } catch (err) {
+        console.log(err);
         return channel.send(`\`ERROR\` \`\`\`xl\n${client.clean(err.message)}\n\`\`\``);
     }
 };
