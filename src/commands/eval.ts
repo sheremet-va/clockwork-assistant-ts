@@ -16,16 +16,16 @@ const run = async (
     const code = args.join(' ');
 
     try {
-        const evaled = eval(code);
+        const evaled = JSON.stringify(eval(code), null, 4);
         const clean = client.clean(evaled);
         return channel.send(`\`\`\`js\n${clean}\n\`\`\``);
     } catch (err) {
-        return channel.send(`\`ERROR\` \`\`\`xl\n${client.clean(err)}\n\`\`\``);
+        return channel.send(`\`ERROR\` \`\`\`xl\n${client.clean(err.message)}\n\`\`\``);
     }
 };
 
 const conf = {
-    enabled: false,
+    enabled: true,
     guildOnly: false,
     helpShown: false,
     permLevel: 'Bot Owner'
