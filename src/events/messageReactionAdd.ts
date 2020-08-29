@@ -38,42 +38,6 @@ async function event(
 
     const messageID = reaction.message.id;
 
-    // если поставить определенный смайлик, то пользователь отправит определенное сообщение (типа золото доставлено)
-    if(store.has('user-messages', messageID)) {
-        const emoji = reaction.emoji.name;
-
-        if(store.get('conf', 'user_sent_gold_emoji') !== emoji) {
-            return;
-        }
-
-        const orderID = store.get('user-messages', messageID);
-        const order = store.get(orderID);
-
-        if(!order) {
-            return;
-        }
-
-        const sellerID = order.sellerID;
-
-        const seller = await client.users.fetch(sellerID);
-
-        try {
-            await seller.send(new Embed({
-                color: 'help',
-                description: store.get('messages', 'user_sent_gold').render(order)
-            }).setFooter(`Покупатель: ${order.user}`));
-
-            store.set(orderID, 'user_sent_gold', 'status');
-            store.push(orderID, ['user_sent_gold', user.id, new Date().valueOf()], 'lifecycle');
-
-            store.delete('user-messages', messageID);
-        } catch(err) {
-            client.logger.error('MANAGER_ERROR',`Не удалось отправить сообщение менеджеру ${order.seller} (${order.sellerID}).`);
-        }
-
-        return;
-    }
-
     if(reaction.message.channel.id !== client.config.dealers.managerChannelID) {
         return;
     }

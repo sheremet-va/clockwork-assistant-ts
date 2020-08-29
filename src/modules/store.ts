@@ -23,13 +23,9 @@ store.ensure('emojis', {
     canceled: '❌'
 });
 
-store.ensure('user-messages', {});
-
 store.ensure('conf', {
     user_sent_gold_status: 'accepted',
     order_completed_status: 'gift_sent',
-
-    user_sent_gold_emoji: '👍',
 
     conversion: 400
 });

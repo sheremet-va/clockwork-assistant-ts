@@ -4,6 +4,8 @@ import { TextChannel, Message, BitFieldResolvable, PermissionString } from 'disc
 
 import { AssistantMessage } from '../types';
 import { ErrorEmbed } from '../modules/error';
+import { store } from '../modules/store';
+import { Embed } from '../helpers/embed';
 
 async function checkPermissions(client: Assistant, message: AssistantMessage): Promise<boolean> {
     const channel = message.channel as TextChannel;
@@ -68,6 +70,39 @@ async function getInfo(client: Assistant, cmd: { conf: { path?: string } }, mess
         : {};
 }
 
+async function confirmOrder(client: Assistant, message: AssistantMessage) {
+    const order = store.find(val => {
+        return (
+            typeof val === 'object' &&
+            'lifecycle' in val &&
+            !(val.lifecycle as [string][]).some(([status]) => status === 'user_sent_gold') &&
+            val.userID === message.author.id &&
+            val.sellerID
+        );
+    });
+
+    if(!order) {
+        return;
+    }
+
+    const orderID = order.orderID;
+    const sellerID = order.sellerID;
+
+    try {
+        const seller = await client.users.fetch(sellerID);
+
+        await seller.send(new Embed({
+            color: 'help',
+            description: store.get('messages', 'user_sent_gold').render(order)
+        }).setFooter(`Покупатель: ${order.user}`));
+
+        store.set(orderID, 'user_sent_gold', 'status');
+        store.push(orderID, ['user_sent_gold', message.author.id, new Date().valueOf()], 'lifecycle');
+    } catch(err) {
+        client.logger.error('MANAGER_ERROR',`Не удалось отправить сообщение менеджеру ${order.seller} (${order.sellerID}).`);
+    }
+}
+
 async function event(
     client: Assistant,
     message: AssistantMessage
@@ -75,6 +110,11 @@ async function event(
     const bot = client.user;
 
     if (!bot || message.author.bot) return;
+
+    if(message.content === '+' && message.channel.type === 'dm') {
+        await confirmOrder(client, message);
+        return;
+    }
 
     message.ownerId = message.guild ? message.guild.id : message.author.id;
     message.name = message.guild ? message.guild.name : message.author.tag;

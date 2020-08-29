@@ -589,7 +589,7 @@ async function run(
         seller: null,
         sellerID: null,
         source: message.guild ? message.guild.name : 'Личные сообщения',
-        lifecycle: [['in_moderation', null, new Date().valueOf()]]
+        lifecycle: [['in_moderation', message.author.id, new Date().valueOf()]]
     };
 
     const embed = new Embed({

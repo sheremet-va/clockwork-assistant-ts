@@ -1,6 +1,4 @@
-import { DMChannel, TextChannel } from 'discord.js';
-
-import { store } from '../modules/store';
+import { TextChannel } from 'discord.js';
 
 interface Packet {
     t: string;
@@ -21,15 +19,11 @@ async function event(client: Assistant, packet: Packet): Promise<void> {
         return;
     }
 
-    const userMessage = store.get('user-messages', packet.d.message_id);
-
-    if (packet.d.channel_id !== client.config.dealers.managerChannelID && !userMessage) {
+    if (packet.d.channel_id !== client.config.dealers.managerChannelID) {
         return;
     }
 
-    const channel = userMessage
-        ? await client.channels.fetch(packet.d.channel_id) as DMChannel
-        : client.channels.cache.get(packet.d.channel_id) as TextChannel;
+    const channel = client.channels.cache.get(packet.d.channel_id) as TextChannel;
 
     if (!channel) {
         return;
