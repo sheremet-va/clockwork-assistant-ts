@@ -33,7 +33,7 @@ function getHelp(): Embed {
         },
         {
             name: 'settings',
-            value: 'возвращает список доступных настроек или меняет их значения.`\n`-buy conf settings`\n`-buy conf settings setting_name`'
+            value: 'возвращает список доступных настроек или меняет их значения.\n`-buy conf settings`\n`-buy conf settings setting_name`'
         },
         {
             name: 'update',
@@ -262,9 +262,18 @@ function changeSettings(args: string[]): Embed {
     const [setting, value] = args;
 
     if(!setting) {
+        const fields = Object.entries(store.get('conf')).map(([code, value]) => {
+            return {
+                name: code,
+                value: `${value}`,
+                inline: false
+            };
+        });
+
         return new Embed({
             color: 'help',
-            description: 'Доступные настройки:\n• ' + Object.keys(store.get('conf')).join('\n• ')
+            description: 'Доступные настройки',
+            fields
         });
     }
 
@@ -284,7 +293,6 @@ function changeSettings(args: string[]): Embed {
 }
 
 async function configure(client: Assistant, message: AssistantMessage, args: string[]): Promise<false | Embed | string> {
-    // store.clear();
     const managers = store.ensure('managers', [client.config.ownerID + ':Fellorion']) as string[];
     const author = message.author.id;
 
@@ -320,7 +328,16 @@ async function configure(client: Assistant, message: AssistantMessage, args: str
     return false;
 }
 
-function getDiscount(guild: string, roleDiscount: number): number {
+function getDiscount(message: AssistantMessage, guild: string, roleDiscount: number): number {
+    const userID = message.author.id;
+    const orders = store.find(val => {
+        return typeof val === 'object' && val.userID === userID;
+    });
+
+    if(!orders) {
+        return 10;
+    }
+
     const discounts = store.get('discounts') || {};
 
     const discount = (Object.entries<string>(discounts))
@@ -402,7 +419,7 @@ async function getProducts(
             throw new ClientError('Ваша заявка отменена.', '', message.author);
         }
 
-        const conversion = parseInt(store.get('conversion')!) - discount;
+        const conversion = parseInt(store.get('conf', 'conversion')!) - discount;
 
         const crown_price = parseInt(result.replace(/(\s|,|\.)/g, '')) * amount;
         const gold_price = crown_price * conversion;
@@ -469,7 +486,7 @@ async function getProducts(
         link = item.link;
     }
 
-    const conversion = parseInt(store.get('conversion')!) - discount;
+    const conversion = parseInt(store.get('conf', 'conversion')!) - discount;
 
     const crown_price = cost * amount;
     const gold_price = crown_price * conversion;
@@ -524,7 +541,7 @@ async function run(
     const userMatch = /@[\w_\-\s\d]+/.exec(query);
 
     if(!userMatch) {
-        throw new ClientError('Не найден @userID. Убедитесь, что вы указали свой ник после символа "@".', '', message.channel);
+        throw new ClientError('Не найден @userID. Убедитесь, что вы указали свой ник после символа "@".', '', message.author);
     }
 
     const user = userMatch[0];
@@ -540,7 +557,7 @@ async function run(
 
     const discountStatus = store.get('discount_status');
     const discountRole = await getRoleDiscount(client, message);
-    const discount = discountStatus ? getDiscount(discountGuild, discountRole) : 0;
+    const discount = discountStatus ? getDiscount(message, discountGuild, discountRole) : 0;
 
     const products = [];
 
@@ -551,7 +568,7 @@ async function run(
         products.push(product);
     }
 
-    const conversion = parseInt(store.get('conversion')!) - discount;
+    const conversion = parseInt(store.get('conf', 'conversion')!) - discount;
     const CONFIRM = store.get('messages', 'confirm')! + ' (Да/Нет)';
 
     const crown_price = products.reduce((sum, { crown_price }) => sum + crown_price, 0);

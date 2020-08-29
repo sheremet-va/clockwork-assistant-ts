@@ -143,10 +143,10 @@ async function event(
                 description: store.get('messages', 'order_done_description').render(order)
             }));
 
-            const role = checkRole(client, user.id);
+            const role = checkRole(client, order.userID);
 
             if(role && reaction.message.guild) {
-                const guildUser = await reaction.message.guild.members.fetch(user.id);
+                const guildUser = await reaction.message.guild.members.fetch(order.userID);
 
                 if(guildUser) {
                     if(!guildUser.roles.cache.has(role.cur)) {

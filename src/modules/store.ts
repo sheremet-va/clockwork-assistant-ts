@@ -30,6 +30,8 @@ store.ensure('conf', {
     order_completed_status: 'gift_sent',
 
     user_sent_gold_emoji: '👍',
+
+    conversion: 400
 });
 
 store.ensure('messages', '{{user}} заказывает «{{name}}» ({{crown_price}} крон) за {{gold_price}} золотых (конверсия {{conversion}}/1). Гильдия: {{guild}}. Источник: {{source}}.', 'order_description');
@@ -38,6 +40,5 @@ store.ensure('messages', 'Заказ для «{{user}}» выполнен', 'ord
 store.ensure('messages', '{{seller}} успешно выполняет заказ. {{user}} наслаждается своим новым подарком - «{{name}}»!', 'order_done_description');
 store.ensure('messages', 'Покупатель {{user}} отправил золото на игровой ник @{{seller}} за предмет «{{name}}» (номер заказа: {{orderID}}).', 'user_sent_gold');
 store.ensure('messages', 'Пожалуйста, подтвердите заказ! Вы хотите купить «{{name}}» ({{crown_price}} крон) за {{gold_price}} золотых (конверсия {{conversion}}/1)?', 'confirm');
-store.ensure('conversion', 350);
 
 export { store };
