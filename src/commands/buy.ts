@@ -507,7 +507,7 @@ async function run(
     const discordUserMatch = /<@!?(\d+)>/.exec(query);
 
     if(discordUserMatch) {
-        const discordUser = await message.guild?.members.fetch(discordUserMatch[1]);
+        const discordUser = await (message.guild && message.guild.members.fetch(discordUserMatch[1]));
 
         query = query.replace(discordUserMatch[0], '@' + (discordUser ? discordUser.user.username : message.author.username));
     }
