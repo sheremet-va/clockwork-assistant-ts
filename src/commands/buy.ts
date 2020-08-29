@@ -128,10 +128,19 @@ async function processMessages(client: Assistant, message: AssistantMessage, arg
     const resultMessage = messageArgs.join(' ');
 
     if(!code) {
+        const fields = Object.entries(store.get('messages')).map(([code, message]) => {
+            return {
+                name: code,
+                value: `${message}`,
+                inline: false
+            };
+        });
+
         return new Embed({
             color: 'help',
             title: 'Доступные коды сообщений',
-            description: '• ' + Object.keys(store.get('messages')).join('\n• ')
+            // description: '• ' + Object.keys(store.get('messages')).join('\n• '),
+            fields
         });
     }
 
