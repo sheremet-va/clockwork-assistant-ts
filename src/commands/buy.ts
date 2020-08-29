@@ -622,10 +622,13 @@ async function run(
 
     mng_channel
         .send(managerMessage)
-        .then(async message => {
-            const msg = await message.fetch();
+        .then(message => {
+            const edited = managerMessage
+                .setFooter(`Покупатель: ${user}. Заявка: ${message.id}`, message.author.avatarURL() || message.author.defaultAvatarURL);
 
-            store.set(msg.id, { ...order, orderID: msg.id });
+            message.edit(edited);
+
+            store.set(message.id, { ...order, orderID: message.id });
         })
         .catch((err) => client.logger.error('ClientError', err.message));
 
