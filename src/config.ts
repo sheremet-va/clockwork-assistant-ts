@@ -1,4 +1,4 @@
-import { id as token, back, dealers } from './config.json';
+import { id as token, back, dealers } from './configs.json';
 import { PermissionString } from 'discord.js';
 
 import { AssistantMessage as Message } from './types';
