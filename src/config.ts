@@ -1,4 +1,4 @@
-import { id as token, back } from './token.json';
+import { id as token, back, dealers } from './config.json';
 import { PermissionString } from 'discord.js';
 
 import { AssistantMessage as Message } from './types';
@@ -32,6 +32,21 @@ const config: config = {
     back,
 
     defaultSettings: { prefix: '-' },
+
+    dealers: {
+        guildID: dealers.guildID,
+        managerChannelID: dealers.managerChannelID,
+        ordersDoneChannelID: dealers.ordersDoneChannelID,
+        roles: [
+            // [roleID, limit, discount]
+            ['711357821827940412', 10000, 2], // alfiq
+            ['711360072533540954', 20000, 4], // cathay-raht
+            ['711359823492415538', 30000, 5], // Senche-Raht
+            ['711360059132739656', 45000, 7], // Adept Of Alkosh
+            ['711358952818081833', 70000, 10], // New Moon Priest
+            ['716601644699090944', 500000, 15], // Sweetroll
+        ]
+    },
 
     permLevels: [
         {
@@ -93,6 +108,12 @@ type config = {
     back: string;
     defaultSettings: { prefix: string };
     permLevels: { level: number; name: string; check: (m: Message) => boolean; guildOnly?: boolean }[];
+    dealers: {
+        managerChannelID: string;
+        ordersDoneChannelID: string;
+        guildID: string;
+        roles: [string, number, number][];
+    };
 };
 
 export { config };

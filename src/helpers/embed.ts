@@ -141,14 +141,14 @@ class Embed extends MessageEmbed {
         return this;
     }
 
-    setThumbnail(thumbnail: Media): this {
-        super.setThumbnail(Embed.media[thumbnail] || thumbnail);
+    setThumbnail(thumbnail: Media | string): this {
+        super.setThumbnail(Embed.media[thumbnail as Media] || thumbnail);
 
         return this;
     }
 
-    setFooter(footer: string): this {
-        super.setFooter(footer);
+    setFooter(footer: string, url?: string): this {
+        super.setFooter(footer, url);
 
         if(footer) {
             this.setTimestamp();

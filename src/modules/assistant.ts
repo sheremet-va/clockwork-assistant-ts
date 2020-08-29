@@ -157,20 +157,20 @@ class AssistantBase extends Client {
         return permlvl;
     };
 
-    awaitReply = async (msg: Message, question: string | Embed, limit = 60000): Promise<string | false> => {
+    awaitReply = async (msg: Message, question: string | Embed, limit = 60000, isDm = false): Promise<string | false> => {
         const filter = (m: Message): boolean => m.author.id === msg.author.id;
 
-        await msg.channel.send(question);
+        const sended = await (isDm ? msg.author : msg.channel).send(question);
 
         try {
-            const collected = await msg.channel.awaitMessages(filter, { max: 1, time: limit, errors: ['time'] });
+            const collected = await sended.channel.awaitMessages(filter, { max: 1, time: limit, errors: ['time'] });
             const first = collected.first();
 
             if(!first) {
                 return false;
             }
 
-            return first.content;
+            return first.content.trim();
         } catch (e) {
             return false;
         }
@@ -257,8 +257,6 @@ class AssistantBase extends Client {
             throw new ClientError(`Number of attempts to get "${cleanUrl}" exceeded`);
         }
 
-        this.logger.log(`[REQ] ${cleanUrl} requested.`);
-
         const [, id] = /id=(\d+)/.exec(url) || [null, '0'];
         const prefix = this.getPrefix(id || '0');
 
@@ -273,7 +271,7 @@ class AssistantBase extends Client {
 
                 this.logger.error(
                     'ClientError',
-                    `[${tries} try] Error at client.request "${cleanUrl}": ${err.message}`
+                    `[${tries} try] Error at client.request "${cleanUrl}": ${err.stack || err.message}`
                 );
 
                 await this.wait(1000);

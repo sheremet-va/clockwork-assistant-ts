@@ -1,4 +1,6 @@
-import { TextChannel } from 'discord.js';
+import { DMChannel, TextChannel } from 'discord.js';
+
+import { store } from '../modules/store';
 
 interface Packet {
     t: string;
@@ -13,18 +15,21 @@ interface Packet {
     };
 }
 
-const MANAGERS_CHANNEL_ID = '556096313968689173';
-// REFACTOR
 async function event(client: Assistant, packet: Packet): Promise<void> {
+
     if (packet.t !== 'MESSAGE_REACTION_ADD') {
         return;
     }
 
-    if (packet.d.channel_id !== MANAGERS_CHANNEL_ID) {
+    const userMessage = store.get('user-messages', packet.d.message_id);
+
+    if (packet.d.channel_id !== client.config.dealers.managerChannelID && !userMessage) {
         return;
     }
 
-    const channel = client.channels.cache.get(packet.d.channel_id) as TextChannel;
+    const channel = userMessage
+        ? await client.channels.fetch(packet.d.channel_id) as DMChannel
+        : client.channels.cache.get(packet.d.channel_id) as TextChannel;
 
     if (!channel) {
         return;
@@ -41,12 +46,14 @@ async function event(client: Assistant, packet: Packet): Promise<void> {
         : packet.d.emoji.name;
 
     const reaction = fetched.reactions.cache.get(emoji);
+    const reactionById = fetched.reactions.cache.get(packet.d.emoji.id || emoji);
 
     const user = client.users.cache.get(packet.d.user_id);
 
     if (reaction && user) reaction.users.cache.set(packet.d.user_id, user);
+    if (reactionById && user) reactionById.users.cache.set(packet.d.user_id, user);
 
-    client.emit('messageReactionAdd', reaction, user);
+    client.emit('messageReactionAdd', reaction || reactionById, user);
 }
 
 export { event };

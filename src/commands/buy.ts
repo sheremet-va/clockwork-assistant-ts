@@ -1,61 +1,609 @@
-// // Команда "ПРЕФИКС" позволяет изменять префикс бота в ЛС или на сервере.
+import { TextChannel } from 'discord.js';
 
-// const Embed = require( '../helpers/embed' );
+import { store } from '../modules/store';
 
-// const { ClientError } = require( '../modules/error' );
+import { ClientError } from '../modules/error';
+import { AssistantMessage, Configuration, RequestInfo } from '../types';
 
-// const MANAGERS_CHANNEL_ID = '556096313968689173';
+import { Embed } from '../helpers/embed';
 
-// //  у менеджеров есть команды какие эмоджи што отправляют
+const ESO_URL = 'https://www.elderscrollsonline.com';
 
-// exports.run = async ( client, message, _, [name = '', user = '']) => {
-//     if( !name ) {
-//         return false;
-//     }
+function getHelp(): Embed {
+    const fields = [
+        {
+            name: 'manager',
+            value: 'добавляет новых менеджеров (в формате discordID:EsoUserID)\n`-buy conf manager 12345:Orion`'
+        },
+        {
+            name: 'removeManager',
+            value: 'удаляет менеджеров (в формате discordID:EsoUserID)\n`-buy conf removeManager 12345:Orion`'
+        },
+        {
+            name: 'discount',
+            value: 'выставляет скидку для гильдии или включает/отключает все скидки\n`-buy conf discount disable/enable`\n`-buy conf discount 10 GuildName Guild_with_Long_Name`'
+        },
+        {
+            name: 'message',
+            value: 'возвращает список доступных сообщений, текст сообщения или меняет на другое сообщение. Внутри доступны переменные из команды `get`. Они пишутся внутри `{{}}` - например, `{{name}}`\n`-buy conf message`\n`-buy conf message confirm`\n`-buy conf message confirm {{user}}, ты точно уверен?`'
+        },
+        {
+            name: 'emoji',
+            value: 'возвращает список доступных кодов для эмодзи и позволяет и менять\n`-buy conf emoji`\n`-buy conf emoji cancel x`'
+        },
+        {
+            name: 'settings',
+            value: 'возвращает список доступных настроек или меняет их значения.`\n`-buy conf settings`\n`-buy conf settings setting_name`'
+        },
+        {
+            name: 'update',
+            value: 'обновляет текущее состояния магазина и его цен\n`-buy conf update`'
+        },
+        {
+            name: 'get',
+            value: 'возвращает доступную информацию по заказу. ID заказа такой же, что и ID сообщения\n`-buy conf get 123443422453`'
+        }
+    ];
 
-//     if( !user ) {
-//         throw new ClientError( 'Укажите свой игровой UserID!', null, message.channel );
-//     }
+    return new Embed({
+        color: 'help',
+        title: 'Доступные команды',
+        fields: fields.map(f => ({ ...f, inline: false }))
+    });
+}
 
-//     const reply = await client.awaitReply( message, `Пожалуйста, подтвердите операцию! Вы хотите купить ${name} (1000 крон) за 1000 золотых (конверсия 1/1)? (Да/Нет)` );
+function addManagers(args: string[]): Embed {
+    const managers = store.get('managers') as string[];
 
-//     if( !reply || reply === 'Нет' ) {
-//         return message.channel.send( 'Операция отменена.' );
-//     }
+    args.forEach(manager => {
+        const [discordId] = manager.split(',');
 
-//     const mng_channel = client.channels.cache.get( MANAGERS_CHANNEL_ID );
+        if(managers.some(name => name.includes(discordId))) {
+            store.remove('managers', manager);
+        }
 
-//     mng_channel.send( `${user} заказал ${name} (1000 крон) за 1000 золотых (конверсия 1/1).` )
-//         .then( message => {
-//             // const collector = message.createReactionCollector( () => true );
+        store.push('managers', manager);
+    });
 
-//             // collector.on( 'collect', reaction => {
-//             //     console.log( `Collected ${reaction.emoji.name}` );
-//             // });
+    return new Embed({
+        color: 'help',
+        description: args.length ? ('Были добавлены следующие менеджеры: \n• ' + args.join(', \n• ') + '\n') : ''
+            + 'Текущие менеджеры: \n• ' + args.join(', \n• ')
+            + '\nЧтобы добавить новых менеджеров, введите их ники в формате "discordId:userId" (без кавычек и знака @, через пробел). '
+            + 'Например, \n`-buy conf 12334:Orion 55555:Vivienn`.'
+    });
+}
 
-//             message.fetch();
-//         })
-//         .catch( client.logger.error );
+function removeManagers(args: string[]): Embed {
+    args.forEach(manager => {
+        store.remove('managers', manager);
+    });
 
-//     return message.channel.send( 'Ваш заказ принят!' );
-// };
+    return new Embed({
+        color: 'help',
+        description: args.length ? ('Были удалены следующие менеджеры: \n• ' + args.join(', \n• ') + '\n') : ''
+            + 'Текущие менеджеры: \n• ' + store.get('managers').join(', \n• ')
+    });
+}
 
-// exports.conf = {
-//     enabled: true,
-//     guildOnly: false,
-//     helpShown: true,
-//     permLevel: 'User'
-// };
+function processDiscount(args: string[], storage: string): Embed {
+    const [discount, ...guilds] = args;
 
-import { Configuration } from '../types';
+    if(discount === 'disable') {
+        store.set('discount_status', false);
 
-async function run(): Promise<true> {
-    console.log('buy launched');
-    return true;
+        return new Embed({
+            color: 'help',
+            description: 'Все скидки отключены. Чтобы включить скидки, введите команду `-buy conf discount enable`.'
+        });
+    }
+
+    if(discount === 'enable') {
+        store.set('discount_status', true);
+
+        return new Embed({
+            color: 'help',
+            description: 'Скидки включены. Чтобы отключить скидки, введите команду `-buy conf discount disable`.'
+        });
+    }
+
+    if(!guilds.length) {
+        return new Embed({
+            color: 'help',
+            description: `На данный момент для ${storage === 'discounts' ? 'гильдей' : 'ролей'}} выставлены следующие скидки:\n` +
+                Object.entries(store.get(storage)).map(([name, disc]) => `• ${name}: ${disc} золотых.`).join('\n')
+        });
+    }
+
+    guilds.forEach(guild => store.set(storage, discount, guild));
+
+    return new Embed({
+        color: 'help',
+        description: `Для ${storage === 'discounts' ? 'гильдий' : 'роли'} ${guilds.join(', ')} была выставлена скидка ${discount} золотых.`
+    });
+}
+
+async function processMessages(client: Assistant, message: AssistantMessage, args: string[]): Promise<Embed> {
+    const [code, ...messageArgs] = args;
+    const resultMessage = messageArgs.join(' ');
+
+    if(!code) {
+        return new Embed({
+            color: 'help',
+            title: 'Доступные коды сообщений',
+            description: '• ' + Object.keys(store.get('messages')).join('\n• ')
+        });
+    }
+
+    const was = new Embed({
+        title: 'Прежнее сообщение',
+        color: 'help',
+        description: store.get('messages', code)
+    });
+
+    if(!resultMessage.length) {
+        return was;
+    }
+
+    const will = new Embed({
+        title: 'Будущее сообщение',
+        color: 'help',
+        description: resultMessage
+    });
+
+    await message.channel.send(was);
+    await message.channel.send(will);
+
+    const reply = await client.awaitReply(message, 'Вы действительно хотите изменить сообщение? (Да/Нет)');
+
+    if(reply === 'Да' || reply === 'да') {
+        store.set('messages', resultMessage, code);
+
+        return new Embed({
+            description: `Сообщение ${code} сохранено`,
+            color: 'help'
+        });
+    } else {
+        return new Embed({
+            description: 'Операция отменена.',
+            color: 'help'
+        });
+    }
+}
+
+function processEmoji(client: Assistant, args: string[]): Embed {
+    const [code, value] = args;
+
+    const guild = client.guilds.cache.get('579001087944687635');
+
+    if(!code) {
+        const emojis = store.get('emojis');
+        const description = Object.entries(emojis).map(([code, emoji]) => {
+            const clEmoji = guild && guild.emojis.cache.find(e => e.name === emoji);
+            return `• Код "${code}": ${clEmoji || `:${emoji}:`} \`${emoji}\``;
+        }).join('\n');
+
+        return new Embed({
+            color: 'help',
+            description
+        });
+    }
+
+    const emojiMatch = /:([\w_~\-\d]+):/g.exec(value);
+
+    const emoji = emojiMatch ? emojiMatch[1] : value;
+
+    if(!emoji) {
+        return new Embed({
+            color: 'error',
+            description: 'Не введен код для эмодзи. Верный синтаксис: `-buy conf emoji canceled x`'
+        });
+    }
+
+    store.set('emojis', emoji, code);
+
+    const clEmoji = guild && guild.emojis.cache.find(e => e.name === emoji);
+
+    return new Embed({
+        color: 'help',
+        description: `Коду "${code}" было выставлено эмодзи ${clEmoji || `:${emoji}:`} \`:${emoji}:\``
+    });
+}
+
+function getOrder(orderID: string, property: string): Embed | string {
+    const order = store.get(orderID);
+
+    if(!order) {
+        return new Embed({
+            color: 'error',
+            description: 'Заявки не найдено.'
+        });
+    }
+
+    const result = property ? (order[property] || order) : order;
+
+    return `\`\`\`js\n${JSON.stringify(result, null, 2).substr(0, 1950)}\n\`\`\``;
+}
+
+async function updateStore(client: Assistant, message: AssistantMessage): Promise<false> {
+    const msg = await message.channel.send(new Embed({
+        color: 'help',
+        description: 'Запускаю обновление магазина...'
+    }));
+
+    try {
+        const { data } = await client.request('/store/update?id=' + message.ownerId, message.channel, '1.0.0');
+
+        await msg.edit(new Embed({
+            color: 'success',
+            description: `Состояние магазина успешно обновлено за ${((new Date().valueOf() - msg.createdTimestamp) / 1000).toFixed(2)} c. ` +
+                `Добавлено ${data.added.pluralize(['предмет', 'предмета', 'предметов'], 'ru')}.`
+        }));
+    } catch (err) {
+        await msg.edit(new Embed({
+            color: 'error',
+            description: `Произошла ошибка при попытке обновить магазин: ${err.message}.`
+        }));
+    }
+
+    return false;
+}
+
+function changeSettings(args: string[]): Embed {
+    const [setting, value] = args;
+
+    if(!setting) {
+        return new Embed({
+            color: 'help',
+            description: 'Доступные настройки:\n• ' + Object.keys(store.get('conf')).join('\n• ')
+        });
+    }
+
+    if(!store.has('conf', setting)) {
+        return new Embed({
+            color: 'error',
+            description: 'Нет такой настройки.'
+        });
+    }
+
+    store.set('conf', value, setting);
+
+    return new Embed({
+        color: 'help',
+        description: `Настройке "${setting}" выставлено значение ${value}.`
+    });
+}
+
+async function configure(client: Assistant, message: AssistantMessage, args: string[]): Promise<false | Embed | string> {
+    // store.clear();
+    const managers = store.ensure('managers', [client.config.ownerID + ':Fellorion']) as string[];
+    const author = message.author.id;
+
+    if(!managers.find(name => name.includes(author))) {
+        throw new ClientError('У вас нет права использовать эту команду.', '', message.channel);
+    }
+
+    const [, action, ...actionArgs] = args;
+
+    if(!action) {
+        return getHelp();
+    }
+
+    // -buy conf manager discordId:userId discordId:userId ...
+    if(action === 'manager' || action === 'managers') {
+        return addManagers(actionArgs);
+    } else if(action === 'removeManager' || action === 'removeManagers') {
+        return removeManagers(actionArgs);
+    } else if(action === 'discount') {
+        return processDiscount(actionArgs, 'discounts');
+    } else if(action === 'message' || action === 'messages') {
+        return await processMessages(client, message, actionArgs);
+    } else if(action === 'emoji') {
+        return processEmoji(client, actionArgs);
+    } else if(action === 'get') {
+        return getOrder(actionArgs[0], actionArgs[1]);
+    } else if(action === 'update') {
+        return await updateStore(client, message);
+    } else if(action === 'settings') {
+        return changeSettings(actionArgs);
+    }
+
+    return false;
+}
+
+function getDiscount(guild: string, roleDiscount: number): number {
+    const discounts = store.get('discounts') || {};
+
+    const discount = (Object.entries<string>(discounts))
+        .find(([name]) => guild && name.toLowerCase().includes(guild.toLowerCase()));
+
+    return parseInt((discount || [null, '0'])[1]) + roleDiscount;
+}
+
+async function deleteMessage(message: AssistantMessage): Promise<void> {
+    try {
+        await message.delete();
+    } catch(e) {}
+}
+
+function encode(query: string): string {
+    return encodeURI(query)
+        .replace('&', '%26')
+        .replace('#', '%23')
+        .replace('#', '%24');
+}
+
+async function getRoleDiscount(client: Assistant, message: AssistantMessage): Promise<number> {
+    const dealersGuild = client.guilds.cache.get(client.config.dealers.guildID);
+
+    if(!dealersGuild) {
+        return 0;
+    }
+
+    const user = await dealersGuild.members.fetch(message.author.id);
+
+    if(!user) {
+        return 0;
+    }
+
+    const roles = client.config.dealers.roles;
+
+    const userRole = roles.find(([id]) => {
+        return user.roles.cache.has(id);
+    });
+
+    if(!userRole) {
+        return 0;
+    }
+
+    return userRole[2];
+}
+
+// WTB 4x "Crowns Summerset" 3000 crowns для UserID: @etozhegdvs /AVEM
+
+type OrderOptions = {
+    discount: number;
+}
+
+async function getProducts(
+    client: Assistant,
+    message: AssistantMessage,
+    query: string,
+    { discount }: OrderOptions
+) {
+    const amountMatch = /\d+x/.exec(query);
+    const amount = amountMatch ? parseInt(amountMatch[0].trim()) : 1;
+
+    const possibleName = query
+        .replace(amountMatch ? amountMatch[0].trim() : '', '')
+        .trim();
+
+    const path = `/store?name=${encode(possibleName)}&id=${(message.guild || message.author).id}`;
+    const { data } = await client.request(path, null, '1.0.0');
+
+    if(!data.length) {
+        const embed = new Embed({
+            color: 'error',
+            description: `Не удалось найти товар по запросу «${possibleName}». Пожалуйста, введите стоимость товара в кронах.`
+        }).setFooter(`Запрос «${possibleName}»`);
+
+        const result = await client.awaitReply(message, embed, 60000, true);
+
+        if(!result) {
+            throw new ClientError('Ваша заявка отменена.', '', message.channel);
+        }
+
+        const conversion = parseInt(store.get('conversion')!) - discount;
+
+        const crown_price = parseInt(result) * amount;
+        const gold_price = crown_price * conversion;
+
+        if(crown_price === 0) {
+            throw new ClientError('Товар не может быть бесплатным.', '', message.channel);
+        }
+
+        return {
+            name: possibleName,
+            link: '',
+            image: '',
+            crown_price,
+            gold_price,
+            amount
+        };
+    }
+
+    if(data.length > 10) {
+        const errorMessage = `По запросу «${possibleName}» найдено слишком много совпадений. Постарайтесь сузить запрос.`;
+
+        throw new ClientError(errorMessage, '', message.channel);
+    }
+
+    let name = '';
+    let cost = 0;
+    let image = '';
+    let link = '';
+
+    if(data.length > 1) {
+        const embed = new Embed({
+            color: 'help',
+            title: `По вашему запросу нашлось ${data.length.pluralize(['совпадение', 'совпадения', 'совпадений'], 'ru')}`,
+            description: 'Введите цифру, под которым обозначен предмет.\n' +
+                data.map(({ ru, en }: { ru: string; en: string }, i: number) => `• ${i + 1}. ${ru}${ru !== en ? ` (${en})` : ''}`).join('\n')
+        }).setFooter(`Запрос «${possibleName}»`);
+
+        const result = await client.awaitReply(message, embed, 60000, true);
+
+        if(!result) {
+            throw new ClientError(
+                `По запросу «${possibleName}» найдено ${data.length.pluralize(['совпадение', 'совпадения', 'совпадений'], 'ru')}. `,
+                '',
+                message.channel
+            );
+        }
+
+        const item = data.find((_: unknown, i: number) => result === `${i + 1}`);
+
+        if(!item) {
+            throw new ClientError('Простите, но по вашему запросу ничего не найдено! Попробуйте еще раз.', '', message.channel);
+        }
+
+        name = item.ru;
+        cost = item.price;
+        image = item.image;
+        link = item.link;
+    } else {
+        const item = data[0];
+
+        name = item.ru;
+        cost = item.price;
+        image = item.image;
+        link = item.link;
+    }
+
+    const conversion = parseInt(store.get('conversion')!) - discount;
+
+    const crown_price = cost * amount;
+    const gold_price = crown_price * conversion;
+
+    return {
+        name,
+        link: ESO_URL + link,
+        image,
+        crown_price,
+        gold_price,
+        amount
+    };
+}
+
+async function run(
+    client: Assistant,
+    message: AssistantMessage,
+    _: RequestInfo,
+    args: string []
+): Promise<void | false> {
+    if(args[0] === 'conf') {
+        const result = await configure(client, message, args);
+
+        if(result instanceof Embed || typeof result === 'string') {
+            await message.channel.send(result);
+
+            return;
+        }
+
+        return;
+    }
+
+    await deleteMessage(message);
+
+    let query = args.join(' ');
+
+    const discordUserMatch = /<@!(\d+)>/.exec(query);
+
+    if(discordUserMatch) {
+        const discordUser = await message.guild?.members.fetch(discordUserMatch[1]);
+
+        query = query.replace(discordUserMatch[0], '@' + (discordUser ? discordUser.user.username : ''));
+    }
+
+    const userMatch = /@[\w_\-\s\d]+/.exec(query);
+
+    if(!userMatch) {
+        throw new ClientError('Не найден @userID. Убедитесь, что вы указали свой ник после символа "@".', '', message.channel);
+    }
+
+    const user = userMatch[0];
+
+    const discountMatch = /\/([\w\s`'".()]+)$/.exec(query);
+    const discountGuild = discountMatch ? discountMatch[1].trim().replace(/\s/g, '_') : '';
+
+    const possibleName = query
+        .replace(user, '')
+        .replace(discountMatch ? discountMatch[0] : '', '')
+        .trim();
+
+    const discountStatus = store.get('discount_status');
+    const discountRole = await getRoleDiscount(client, message);
+    const discount = discountStatus ? getDiscount(discountGuild, discountRole) : 0;
+
+    const products = [];
+
+    // eslint-disable-next-line @typescript-eslint/no-for-in-array
+    for(const name of possibleName.split('\n')) {
+        const product = await getProducts(client, message, name, { discount });
+
+        products.push(product);
+    }
+
+    const conversion = parseInt(store.get('conversion')!) - discount;
+    const CONFIRM = store.get('messages', 'confirm')! + ' (Да/Нет)';
+
+    const crown_price = products.reduce((sum, { crown_price }) => sum + crown_price, 0);
+    const gold_price = products.reduce((sum, { gold_price }) => sum + gold_price, 0);
+
+    const order = {
+        products,
+        conversion,
+        discount,
+        crown_price: new Intl.NumberFormat('ru-RU').format(crown_price),
+        gold_price: new Intl.NumberFormat('ru-RU').format(gold_price),
+        name: products.map(({ name, amount }) => (amount > 1 ? amount + 'x ' : '') + name).join(', '),
+        guild: discountGuild || 'нет',
+        message: query,
+        user,
+        userID: message.author.id,
+        status: 'in_moderation',
+        seller: null,
+        sellerID: null,
+        source: message.guild ? message.guild.name : 'Личные сообщения',
+        lifecycle: [['in_moderation', null, new Date().valueOf()]]
+    };
+
+    const embed = new Embed({
+        title: 'Подтверждение заказа',
+        color: 'help',
+        description: CONFIRM.render({ ...order }),
+        image: products.length === 1 ? (products[0].image || null) : null
+    }).setFooter(`Покупатель: ${user}`, message.author.avatarURL() || message.author.defaultAvatarURL);
+
+    const reply = await client.awaitReply(message, embed, 60000, true);
+
+    if(!reply || !/да|yes|\+/i.exec(reply)) {
+        await message.author.send(new Embed({
+            color: 'error',
+            description: 'Покупка отменена.'
+        }));
+
+        return;
+    }
+
+    const mng_channel = client.channels.cache.get(client.config.dealers.managerChannelID)! as TextChannel;
+
+    const managerMessage = new Embed({
+        title: `${message.author.tag} делает заказ`,
+        color: 'help',
+        description: store.get('messages', 'order_description').render(order),
+    })
+        .setFooter(`Покупатель: ${user}`, message.author.avatarURL() || message.author.defaultAvatarURL);
+
+    mng_channel
+        .send(managerMessage)
+        .then(async message => {
+            const msg = await message.fetch();
+
+            store.set(msg.id, { ...order, orderID: msg.id });
+        })
+        .catch((err) => client.logger.error('ClientError', err.message));
+
+    const ORDER_CONFIRMED = store.get('messages', 'order_confirmed');
+
+    await message.author.send(new Embed({
+        color: 'success',
+        description: ORDER_CONFIRMED.render(order)
+    }));
 }
 
 const conf: Configuration = {
-    enabled: false,
+    enabled: true,
     guildOnly: false,
     helpShown: true,
     permLevel: 'User',

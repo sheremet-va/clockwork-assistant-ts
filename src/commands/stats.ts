@@ -3,7 +3,7 @@
 import { version, Message } from 'discord.js';
 import { AssistantMessage } from '../types';
 
-import * as moment from 'moment';
+import moment from 'moment';
 import 'moment-duration-format';
 
 const run = async (

@@ -15,6 +15,7 @@ export class AssistantMessage extends Message {
     author!: AssistantUser;
     args!: string[];
     command!: string;
+    ownerId!: string;
 }
 
 export declare interface RequestInfo {

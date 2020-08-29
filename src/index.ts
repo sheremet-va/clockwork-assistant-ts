@@ -46,16 +46,11 @@ const init = async (): Promise<void> => {
 
     const evtPath = Path.resolve(__dirname, 'events');
     const evtFiles = await readdir(evtPath);
-    const skipEvts = ['raw', 'messageReactionAdd'];
 
     client.logger.log(`Launching ${evtFiles.length} events.`);
 
     evtFiles.forEach(async file => {
         const eventName = file.split('.')[0];
-
-        if(skipEvts.includes(eventName) || file.includes('map')) {
-            return;
-        }
 
         const event = await import(`./events/${file}`);
 

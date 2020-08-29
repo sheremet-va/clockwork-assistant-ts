@@ -64,7 +64,7 @@ function log(message: AssistantMessage): string {
 
 async function getInfo(client: Assistant, cmd: { conf: { path?: string } }, message: AssistantMessage): Promise<object> {
     return cmd.conf.path
-        ? await client.request(cmd.conf.path + '?id=' + message.id, message.channel, '1.0')
+        ? await client.request(cmd.conf.path + '?id=' + message.ownerId, message.channel, '1.0')
         : {};
 }
 
@@ -76,10 +76,10 @@ async function event(
 
     if (!bot || message.author.bot) return;
 
-    message.id = message.guild ? message.guild.id : message.author.id;
+    message.ownerId = message.guild ? message.guild.id : message.author.id;
     message.name = message.guild ? message.guild.name : message.author.tag;
 
-    const prefix = client.getPrefix(message.id);
+    const prefix = client.getPrefix(message.ownerId);
 
     const prefixMention = new RegExp(`^<@!?${bot.id}>( |)$`);
 
@@ -103,7 +103,7 @@ async function event(
     if (!cmd) return;
 
     // TODO CACHE, remove cache on certain commands
-    const user = await client.getUser(message.id);
+    const user = await client.getUser(message.ownerId);
 
     message.settings = user.settings;
     message.subs = user.subscriptions;
