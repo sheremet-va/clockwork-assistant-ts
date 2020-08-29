@@ -56,10 +56,12 @@ function addManagers(args: string[]): Embed {
     const managers = store.get('managers') as string[];
 
     args.forEach(manager => {
-        const [discordId] = manager.split(',');
+        const [discordId] = manager.split(':');
 
-        if(managers.some(name => name.includes(discordId))) {
-            store.remove('managers', manager);
+        const having = managers.find(name => name.includes(discordId));
+
+        if(having) {
+            store.remove('managers', having);
         }
 
         store.push('managers', manager);
