@@ -74,9 +74,9 @@ async function confirmOrder(client: Assistant, message: AssistantMessage) {
     const order = store.find(val => {
         return (
             typeof val === 'object' &&
-            'lifecycle' in val &&
-            !(val.lifecycle as [string][]).some(([status]) => status === 'user_sent_gold') &&
+            'status' in val &&
             val.userID === message.author.id &&
+            val.status === 'accepted' &&
             val.sellerID
         );
     });
