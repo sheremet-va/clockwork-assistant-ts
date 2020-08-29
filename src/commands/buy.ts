@@ -68,7 +68,7 @@ function addManagers(args: string[]): Embed {
     return new Embed({
         color: 'help',
         description: args.length ? ('Были добавлены следующие менеджеры: \n• ' + args.join(', \n• ') + '\n') : ''
-            + 'Текущие менеджеры: \n• ' + args.join(', \n• ')
+            + 'Текущие менеджеры: \n• ' + (args.length ? args.join(', \n• ') : managers.join(', \n• '))
             + '\nЧтобы добавить новых менеджеров, введите их ники в формате "discordId:userId" (без кавычек и знака @, через пробел). '
             + 'Например, \n`-buy conf 12334:Orion 55555:Vivienn`.'
     });
