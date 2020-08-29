@@ -1,7 +1,7 @@
 import { Message, User } from 'discord.js';
 import { Settings } from './modules/subscriptions';
 
-class AssistantUser extends User {
+export class AssistantUser extends User {
     permLevel!: number;
     permLevelName!: string;
 }

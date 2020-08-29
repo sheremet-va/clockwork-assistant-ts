@@ -1,6 +1,7 @@
 import { Embed } from '../helpers/embed';
 
 import { TextChannel, DMChannel } from 'discord.js';
+import { AssistantUser } from '../types';
 
 class ErrorEmbed extends Embed {
     constructor(message: string) {
@@ -18,7 +19,7 @@ class ClientError extends Error {
     constructor(
         public description: string,
         public message: string = '',
-        public channel: TextChannel | DMChannel | null = null
+        public channel: TextChannel | DMChannel | AssistantUser | null = null
     ) {
         super(message);
     }

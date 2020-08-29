@@ -390,16 +390,16 @@ async function getProducts(
         const result = await client.awaitReply(message, embed, 60000, true);
 
         if(!result) {
-            throw new ClientError('Ваша заявка отменена.', '', message.channel);
+            throw new ClientError('Ваша заявка отменена.', '', message.author);
         }
 
         const conversion = parseInt(store.get('conversion')!) - discount;
 
-        const crown_price = parseInt(result) * amount;
+        const crown_price = parseInt(result.replace(/(\s|,|\.)/g, '')) * amount;
         const gold_price = crown_price * conversion;
 
         if(crown_price === 0) {
-            throw new ClientError('Товар не может быть бесплатным.', '', message.channel);
+            throw new ClientError('Товар не может быть бесплатным.', '', message.author);
         }
 
         return {
@@ -415,7 +415,7 @@ async function getProducts(
     if(data.length > 10) {
         const errorMessage = `По запросу «${possibleName}» найдено слишком много совпадений. Постарайтесь сузить запрос.`;
 
-        throw new ClientError(errorMessage, '', message.channel);
+        throw new ClientError(errorMessage, '', message.author);
     }
 
     let name = '';
@@ -435,7 +435,7 @@ async function getProducts(
 
         if(!result) {
             throw new ClientError(
-                `По запросу «${possibleName}» найдено ${data.length.pluralize(['совпадение', 'совпадения', 'совпадений'], 'ru')}. `,
+                'Заказ отменен.',
                 '',
                 message.channel
             );
@@ -444,7 +444,7 @@ async function getProducts(
         const item = data.find((_: unknown, i: number) => result === `${i + 1}`);
 
         if(!item) {
-            throw new ClientError('Простите, но по вашему запросу ничего не найдено! Попробуйте еще раз.', '', message.channel);
+            throw new ClientError('Простите, но по вашему запросу ничего не найдено! Попробуйте еще раз.', '', message.author);
         }
 
         name = item.ru;
@@ -504,12 +504,12 @@ async function run(
 
     let query = args.join(' ');
 
-    const discordUserMatch = /<@!(\d+)>/.exec(query);
+    const discordUserMatch = /<@!?(\d+)>/.exec(query);
 
     if(discordUserMatch) {
         const discordUser = await message.guild?.members.fetch(discordUserMatch[1]);
 
-        query = query.replace(discordUserMatch[0], '@' + (discordUser ? discordUser.user.username : ''));
+        query = query.replace(discordUserMatch[0], '@' + (discordUser ? discordUser.user.username : message.author.username));
     }
 
     const userMatch = /@[\w_\-\s\d]+/.exec(query);
@@ -524,6 +524,7 @@ async function run(
     const discountGuild = discountMatch ? discountMatch[1].trim().replace(/\s/g, '_') : '';
 
     const possibleName = query
+        .replace('<' + user + '>', '')
         .replace(user, '')
         .replace(discountMatch ? discountMatch[0] : '', '')
         .trim();

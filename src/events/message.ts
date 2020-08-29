@@ -90,7 +90,15 @@ async function event(
     if (!message.content.startsWith(prefix)) return;
 
     const args = message.args = message.content.slice(prefix.length).trim().split(/ +/g);
-    const command = message.command = (args.shift() || '').toLowerCase();
+    let command = '';
+
+    // TODO ПЕРЕДЕЛАТЬ ИЛИ Я СДОХНУ ОТ СТЫДА
+    if(args[0] && args[0].startsWith('wtb\n')) {
+        command = message.command = 'wtb';
+        args[0] = args[0].replace('wtb\n', '');
+    } else {
+        command = message.command = (args.shift() || '').toLowerCase();
+    }
 
     if (!message.member && message.guild) {
         await message.guild.members.fetch(message.author);
