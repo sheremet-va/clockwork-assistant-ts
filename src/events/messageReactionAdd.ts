@@ -87,7 +87,7 @@ async function event(
         const userMessage = await orderUser.send(new Embed({
             color: 'help',
             description: message
-        }).setFooter(`Менеджер @${user.username}. Заказ: ${order.orderID}`, user.avatarURL() || user.defaultAvatarURL));
+        }).setFooter(`Менеджер @${user.username}#${user.discriminator}. Заказ: ${order.orderID}`, user.avatarURL() || user.defaultAvatarURL));
 
         store.set(messageID, seller, 'seller');
         store.set(messageID, sellerID, 'sellerID');
