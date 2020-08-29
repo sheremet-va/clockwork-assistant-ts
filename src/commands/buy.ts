@@ -21,7 +21,7 @@ function getHelp(): Embed {
         },
         {
             name: 'discount',
-            value: 'выставляет скидку для гильдии или включает/отключает все скидки\n`-buy conf discount disable/enable`\n`-buy conf discount 10 GuildName Guild_with_Long_Name`'
+            value: 'выставляет скидку для гильдии или включает/отключает все скидки\n`-buy conf discount disable/enable`\n`-buy conf discount 10 GuildName, Guild With Long Name`'
         },
         {
             name: 'message',
