@@ -15,7 +15,7 @@ function random(client: Assistant): void {
 
     change();
 
-    setTimeout(change, FREQUENCY_IN_MS);
+    setInterval(change, FREQUENCY_IN_MS);
 }
 
 export { random };

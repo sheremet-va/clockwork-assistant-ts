@@ -115,11 +115,13 @@ function processDiscount(args: string[], storage: string): Embed {
         });
     }
 
-    guilds.forEach(guild => store.set(storage, discount, guild));
+    const guildsNames = guilds.join(' ').split(',');
+
+    guildsNames.forEach(guild => store.set(storage, discount, guild.trim()));
 
     return new Embed({
         color: 'help',
-        description: `Для ${storage === 'discounts' ? 'гильдий' : 'роли'} ${guilds.join(', ')} была выставлена скидка ${discount} золотых.`
+        description: `Для ${storage === 'discounts' ? 'гильдий' : 'роли'} ${guildsNames.join(', ')} была выставлена скидка ${discount} золотых.`
     });
 }
 
@@ -139,7 +141,6 @@ async function processMessages(client: Assistant, message: AssistantMessage, arg
         return new Embed({
             color: 'help',
             title: 'Доступные коды сообщений',
-            // description: '• ' + Object.keys(store.get('messages')).join('\n• '),
             fields
         });
     }
@@ -547,7 +548,7 @@ async function run(
     const user = userMatch[0];
 
     const discountMatch = /\/([\w\s`'".()]+)$/.exec(query);
-    const discountGuild = discountMatch ? discountMatch[1].trim().replace(/\s/g, '_') : '';
+    const discountGuild = discountMatch ? discountMatch[1].trim() : '';
 
     const possibleName = query
         .replace('<' + user + '>', '')
