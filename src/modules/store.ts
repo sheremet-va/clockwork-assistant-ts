@@ -15,6 +15,7 @@ store.ensure('messages', 'К сожалению, ваш заказ был отк
 
 store.ensure('discounts', {});
 store.ensure('discount_status', true);
+store.ensure('managers', ['215358861647806464:Fellorion']);
 store.ensure('emojis', {
     accepted: 'kajiit_dealer',
     gold_received: 'kajiit_bankeer',

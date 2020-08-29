@@ -481,6 +481,13 @@ async function run(
     _: RequestInfo,
     args: string []
 ): Promise<void | false> {
+    const author = message.author.id;
+    const managers = store.get('managers') as string[];
+
+    if(!managers.some(name => name.split(':')[0] === author)) {
+        return;
+    }
+
     if(args[0] === 'conf') {
         const result = await configure(client, message, args);
 
