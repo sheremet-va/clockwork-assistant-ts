@@ -110,7 +110,7 @@ function processDiscount(args: string[], storage: string): Embed {
     if(!guilds.length) {
         return new Embed({
             color: 'help',
-            description: `На данный момент для ${storage === 'discounts' ? 'гильдей' : 'ролей'}} выставлены следующие скидки:\n` +
+            description: `На данный момент для ${storage === 'discounts' ? 'гильдий' : 'ролей'} выставлены следующие скидки:\n` +
                 Object.entries(store.get(storage)).map(([name, disc]) => `• ${name}: ${disc} золотых.`).join('\n')
         });
     }
