@@ -645,7 +645,7 @@ async function run(
 const conf: Configuration = {
     enabled: true,
     guildOnly: false,
-    helpShown: true,
+    helpShown: false,
     permLevel: 'User',
 };
 
