@@ -91,8 +91,12 @@ async function confirmOrder(client: Assistant, message: AssistantMessage) {
     try {
         const seller = await client.users.fetch(sellerID);
 
+        const url = `https://discordapp.com/channels/${client.config.dealers.guildID}/${client.config.dealers.managerChannelID}/${orderID}`;
+
         await seller.send(new Embed({
             color: 'help',
+            url,
+            title: `Золото по заказу ${orderID} отправлено`,
             description: store.get('messages', 'user_sent_gold').render(order)
         }).setFooter(`Покупатель: ${order.user}`));
 
