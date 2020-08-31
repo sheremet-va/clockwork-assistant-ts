@@ -12,6 +12,7 @@ store.ensure('messages', 'Ваш заказ с номером {{orderID}} на �
 store.ensure('messages', '@{{seller}} получает золото за «{{name}}». Ожидайте подарок.', 'gold_received');
 store.ensure('messages', 'Подарок отправлен! Ваш заказ на «{{name}}» выполнен.', 'gift_sent');
 store.ensure('messages', 'К сожалению, ваш заказ был отклонен менеджером.', 'canceled');
+store.ensure('messages', 'Менеджер ушёл проверять письмо с золотом', 'user_sent_gold_response');
 
 store.ensure('discounts', {});
 store.ensure('discount_status', true);

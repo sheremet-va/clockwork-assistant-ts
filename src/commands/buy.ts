@@ -622,24 +622,26 @@ async function run(
     })
         .setFooter(`Покупатель: ${user}`, message.author.avatarURL() || message.author.defaultAvatarURL);
 
-    mng_channel
-        .send(managerMessage)
-        .then(message => {
-            const edited = managerMessage
-                .setFooter(`Покупатель: ${user}. Заявка: ${message.id}`, message.author.avatarURL() || message.author.defaultAvatarURL);
+    try {
+        const orderMessage = await mng_channel.send(managerMessage);
 
-            message.edit(edited);
+        const edited = managerMessage
+            .setFooter(`Покупатель: ${user}. Заявка: ${message.id}`, message.author.avatarURL() || message.author.defaultAvatarURL);
 
-            store.set(message.id, { ...order, orderID: message.id });
-        })
-        .catch((err) => client.logger.error('ClientError', err.message));
+        orderMessage.edit(edited);
 
-    const ORDER_CONFIRMED = store.get('messages', 'order_confirmed');
+        store.set(message.id, { ...order, orderID: message.id });
 
-    await message.author.send(new Embed({
-        color: 'success',
-        description: ORDER_CONFIRMED.render(order)
-    }));
+        const ORDER_CONFIRMED = store.get('messages', 'order_confirmed');
+
+        await message.author.send(new Embed({
+            color: 'success',
+            description: ORDER_CONFIRMED.render({ ...order, orderID: message.id })
+        }));
+    } catch(err) {
+        client.logger.error('SellerOrdersError', err.message, err.stack);
+    }
+
 }
 
 const conf: Configuration = {
