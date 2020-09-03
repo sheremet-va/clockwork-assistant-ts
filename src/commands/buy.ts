@@ -626,17 +626,17 @@ async function run(
         const orderMessage = await mng_channel.send(managerMessage);
 
         const edited = managerMessage
-            .setFooter(`Покупатель: ${user}. Заявка: ${message.id}`, message.author.avatarURL() || message.author.defaultAvatarURL);
+            .setFooter(`Покупатель: ${user}. Заявка: ${orderMessage.id}`, message.author.avatarURL() || message.author.defaultAvatarURL);
 
         orderMessage.edit(edited);
 
-        store.set(message.id, { ...order, orderID: message.id });
+        store.set(orderMessage.id, { ...order, orderID: orderMessage.id });
 
         const ORDER_CONFIRMED = store.get('messages', 'order_confirmed');
 
         await message.author.send(new Embed({
             color: 'success',
-            description: ORDER_CONFIRMED.render({ ...order, orderID: message.id })
+            description: ORDER_CONFIRMED.render({ ...order, orderID: orderMessage.id })
         }));
     } catch(err) {
         client.logger.error('SellerOrdersError', err.message, err.stack);
