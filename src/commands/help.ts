@@ -34,7 +34,7 @@ type ApiResponse = {
 
 async function run(
     client: Assistant,
-    { channel, id, guild }: AssistantMessage,
+    { channel, ownerId: id }: AssistantMessage,
     _info: RequestInfo,
     args: string[] = []
 ): Promise<Message | false> {

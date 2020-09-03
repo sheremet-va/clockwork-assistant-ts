@@ -8,7 +8,7 @@ import { AssistantMessage, RequestInfo } from '../types';
 
 const run = async (
     client: Assistant,
-    { id, channel, languages }: AssistantMessage,
+    { ownerId: id, channel, languages }: AssistantMessage,
     _: RequestInfo,
     [type = '', value = '']
 ): Promise<Message | false> => {

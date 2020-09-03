@@ -8,7 +8,7 @@ import * as subscriptions from '../helpers/subscriptions';
 
 async function run(
     client: Assistant,
-    { channel, id }: AssistantMessage,
+    { channel, ownerId: id }: AssistantMessage,
     _info: RequestInfo,
     [name = '']
 ): Promise<Message | false> {

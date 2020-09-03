@@ -55,7 +55,7 @@ function buildFields(translations: Record<string, { plural: string; results: { r
 
 async function run(
     client: Assistant,
-    { channel, id }: AssistantMessage,
+    { channel, ownerId: id }: AssistantMessage,
     _info: RequestInfo,
     args: string[] = []
 ): Promise<Message | false> {

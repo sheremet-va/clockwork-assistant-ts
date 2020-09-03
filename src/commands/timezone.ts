@@ -8,7 +8,7 @@ import * as settings from '../helpers/settings';
 
 async function run(
     client: Assistant,
-    { channel, id }: AssistantMessage,
+    { channel, ownerId: id }: AssistantMessage,
     _info: RequestInfo,
     [value = '']
 ): Promise<Message | false> {

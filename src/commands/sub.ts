@@ -9,7 +9,7 @@ import { AssistantMessage, RequestInfo } from '../types';
 
 const run = async (
     client: Assistant,
-    { channel, id }: AssistantMessage,
+    { channel, ownerId: id }: AssistantMessage,
     _: RequestInfo,
     [name]: [string | undefined]
 ): Promise<string | Message> => { // eslint-disable-line no-unused-vars

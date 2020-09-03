@@ -10,7 +10,7 @@ import { Message } from 'discord.js';
 
 const run = async (
     client: Assistant,
-    { channel, id, command, settings }: AssistantMessage,
+    { channel, ownerId: id, command, settings }: AssistantMessage,
     info: { data: Record<string, string> },
     [days = '0']
 ): Promise<Message | undefined> => {
