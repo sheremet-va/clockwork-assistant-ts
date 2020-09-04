@@ -12,7 +12,7 @@ function checkRole(client: Assistant, userID: string): { prev: string; cur: stri
     });
 
     const crownsBought = orders.reduce((total, order) => {
-        return total + parseInt(order.crown_price);
+        return total + parseInt(order.crown_price.replace(/[,\s]+/, ''));
     }, 0);
 
     const roleIndex = client.config.dealers.roles.findIndex(([, limit]) => crownsBought <= limit);
