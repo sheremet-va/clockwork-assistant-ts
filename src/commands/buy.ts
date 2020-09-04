@@ -416,15 +416,21 @@ async function getProducts(
             description: `Не удалось найти товар по запросу «${possibleName}». Пожалуйста, введите стоимость товара в кронах.`
         }).setFooter(`Запрос «${possibleName}»`);
 
-        const result = await client.awaitReply(message, embed, 60000, true);
+        const result = await client.awaitReply(message, embed, 60000 * 5, true);
 
         if(!result) {
             throw new ClientError('Ваша заявка отменена.', '', message.author);
         }
 
+        const price = parseInt(result.replace(/(\s|,|\.)/g, ''));
+
+        if(isNaN(price)) {
+            throw new ClientError('Некорректный ответ. Пожалуйста, введите число.', '', message.author);
+        }
+
         const conversion = parseInt(store.get('conf', 'conversion')!) - discount;
 
-        const crown_price = parseInt(result.replace(/(\s|,|\.)/g, '')) * amount;
+        const crown_price = price * amount;
         const gold_price = crown_price * conversion;
 
         if(crown_price === 0) {
@@ -572,7 +578,7 @@ async function run(
     }
 
     const conversion = parseInt(store.get('conf', 'conversion')!) - discount;
-    const CONFIRM = store.get('messages', 'confirm')! + ' (Да/Нет)';
+    const CONFIRM = store.get('messages', 'confirm')! + ' Введите "да" или "+" для подтверждения.';
 
     const crown_price = products.reduce((sum, { crown_price }) => sum + crown_price, 0);
     const gold_price = products.reduce((sum, { gold_price }) => sum + gold_price, 0);
@@ -602,7 +608,7 @@ async function run(
         image: products.length === 1 ? (products[0].image || null) : null
     }).setFooter(`Покупатель: ${user}`, message.author.avatarURL() || message.author.defaultAvatarURL);
 
-    const reply = await client.awaitReply(message, embed, 60000, true);
+    const reply = await client.awaitReply(message, embed, 60000 * 60, true);
 
     if(!reply || !/да|yes|\+/i.exec(reply)) {
         await message.author.send(new Embed({
