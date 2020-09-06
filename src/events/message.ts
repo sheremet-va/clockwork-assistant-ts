@@ -139,15 +139,7 @@ async function event(
     if (!message.content.startsWith(prefix)) return;
 
     const args = message.args = message.content.slice(prefix.length).trim().split(/ +/g);
-    let command = '';
-
-    // TODO ПЕРЕДЕЛАТЬ ИЛИ Я СДОХНУ ОТ СТЫДА
-    if(args[0] && /^(wtb|buy)\n/.test(args[0])) {
-        command = message.command = 'wtb';
-        args[0] = args[0].replace(/^(wtb|buy)\n/, '');
-    } else {
-        command = message.command = (args.shift() || '').toLowerCase();
-    }
+    const command = message.command = (args.shift() || '').toLowerCase();
 
     if (!message.member && message.guild) {
         await message.guild.members.fetch(message.author);

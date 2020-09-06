@@ -571,7 +571,7 @@ async function run(
     const products = [];
 
     // eslint-disable-next-line @typescript-eslint/no-for-in-array
-    for(const name of possibleName.split('\n')) {
+    for(const name of possibleName.split('+')) {
         const product = await getProducts(client, message, name, { discount });
 
         products.push(product);
