@@ -35,6 +35,24 @@ export function init(client: Assistant): void {
         return guild.toJSON();
     });
 
+    app.get('/users', async(req, reply) => {
+        if(!req.query.ids) {
+            return reply.code(400);
+        }
+
+        const ids = (req.query.ids as string).split(',');
+
+        return ids.map(id => {
+            const user = client.users.cache.get(id);
+
+            if(!user) {
+                return false;
+            }
+
+            return { id: user.id, tag: user.tag, avatar: user.avatarURL() };
+        }).filter(Boolean);
+    });
+
     app.get('/users/:userId', async(req, reply) => {
         const userId = req.params.userId;
 
