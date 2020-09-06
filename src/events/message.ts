@@ -171,7 +171,9 @@ async function event(
 
     message.command = command[1].toLowerCase();
 
-    const args = message.args = content.slice(message.command.length).trim().split(/ +/g);
+    const formattedArgs = content.slice(message.command.length).trim().split(/ +/g);
+
+    const args = message.args = formattedArgs.length && formattedArgs[0] !== '' ? formattedArgs : [];
 
     if (!message.member && message.guild) {
         await message.guild.members.fetch(message.author);
