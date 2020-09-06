@@ -578,7 +578,7 @@ async function run(
     }
 
     const conversion = parseInt(store.get('conf', 'conversion')!) - discount;
-    const CONFIRM = store.get('messages', 'confirm')! + ' Введите "да" или "+" для подтверждения.';
+    const CONFIRM = store.get('messages', 'confirm')! + ' Введите «`+`» для подтверждения. Чтобы отменить заказ, введите «`-`».';
 
     const crown_price = products.reduce((sum, { crown_price }) => sum + crown_price, 0);
     const gold_price = products.reduce((sum, { gold_price }) => sum + gold_price, 0);
