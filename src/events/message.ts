@@ -112,6 +112,24 @@ async function confirmOrder(client: Assistant, message: AssistantMessage) {
     }
 }
 
+// async function createInvite(client: Assistant, message: AssistantMessage) {
+//     const channel = client.channels.cache.get('752154861818085490') as GuildChannel;
+//
+//     if(!channel || channel.type !== 'text') {
+//         return;
+//     }
+//
+//     const invite = await channel.createInvite(
+//         {
+//             maxAge: 10 * 60 * 1000,
+//             maxUses: 1,
+//             reason: ''
+//         }
+//     );
+//
+//     return message.reply(invite);
+// }
+
 async function event(
     client: Assistant,
     message: AssistantMessage
@@ -124,6 +142,11 @@ async function event(
         await confirmOrder(client, message);
         return;
     }
+
+    // if(message.content === '?' && message.channel.type === 'dm') {
+    //     await createInvite(client, message);
+    //     return;
+    // }
 
     message.ownerId = message.guild ? message.guild.id : message.author.id;
     message.name = message.guild ? message.guild.name : message.author.tag;
@@ -138,16 +161,25 @@ async function event(
 
     if (!message.content.startsWith(prefix)) return;
 
-    const args = message.args = message.content.slice(prefix.length).trim().split(/ +/g);
-    const command = message.command = (args.shift() || '').toLowerCase();
+    const content = message.content.slice(prefix.length).trim();
+
+    const command = /^([^\s]+)/.exec(content) || [null, ''];
+
+    if(!command[1]) {
+        return;
+    }
+
+    message.command = command[1].toLowerCase();
+
+    const args = message.args = content.slice(message.command.length).trim().split(/ +/g);
 
     if (!message.member && message.guild) {
         await message.guild.members.fetch(message.author);
     }
 
-    const alias = client.aliases.get(command);
+    const alias = client.aliases.get(message.command);
 
-    const cmd = client.commands.get(command) || client.commands.get(alias || '');
+    const cmd = client.commands.get(message.command) || client.commands.get(alias || '');
 
     if (!cmd) return;
 
@@ -192,7 +224,7 @@ async function event(
     if (typeof result === 'boolean' && !result) {
         const helpCmd = client.commands.get('help')!;
 
-        helpCmd.run(client, message, info, [command]);
+        helpCmd.run(client, message, info, [message.command]);
     }
 
     if (typeof result === 'string') {

@@ -570,8 +570,17 @@ async function run(
 
     const products = [];
 
+    const plusSplited = possibleName.split('+');
+    const nlSplited = possibleName.split('\n');
+
+    const items = plusSplited.length > nlSplited.length ? plusSplited : nlSplited;
+
+    if(!items.length) {
+        throw new ClientError('Не удалось обнаружить товары в вашей заявке.', '', message.author);
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-for-in-array
-    for(const name of possibleName.split('+')) {
+    for(const name of items) {
         const product = await getProducts(client, message, name, { discount });
 
         products.push(product);

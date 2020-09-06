@@ -31,6 +31,8 @@ const config: config = {
     token,
     back,
 
+    supportChannel: '752154861818085490',
+
     defaultSettings: { prefix: '-' },
 
     dealers: {
@@ -114,6 +116,7 @@ type config = {
         guildID: string;
         roles: [string, number, number][];
     };
+    supportChannel: string;
 };
 
 export { config };
