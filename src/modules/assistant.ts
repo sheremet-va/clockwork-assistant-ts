@@ -13,7 +13,7 @@ import axios, { AxiosRequestConfig } from 'axios';
 import { Settings } from './subscriptions';
 import { Embed } from '../helpers/embed';
 
-const LIMIT_REPEAT_GET = 10;
+const LIMIT_REPEAT_GET = 3;
 
 const prefixes = new Enmap<string, string>('prefixes');
 
