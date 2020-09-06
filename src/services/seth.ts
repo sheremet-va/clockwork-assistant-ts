@@ -35,5 +35,29 @@ export function init(client: Assistant): void {
         return guild.toJSON();
     });
 
+    app.get('/users/:userId', async(req, reply) => {
+        const userId = req.params.userId;
+
+        const user = await client.users.fetch(userId);
+
+        if(!user) {
+            return reply.code(404);
+        }
+
+        const guilds = client.guilds.cache
+            .filter((g) => g.members.cache.has(user.id))
+            .map(g => ({
+                name: g.name,
+                memberCount: g.memberCount,
+                id: g.id,
+                icon: g.icon
+            }));
+
+        return {
+            ...user.toJSON(),
+            guilds
+        };
+    });
+
     app.listen(PORT, () => client.logger.log('Seth Listens ' + PORT + ' port'));
 }
