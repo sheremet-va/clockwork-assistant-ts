@@ -83,13 +83,13 @@ export class Logger {
     cmd = (description: string, message: AssistantMessage): void => {
         const alias = this.client.aliases.get(message.command);
 
-        const command = this.client.commands.get(message.command) || this.client.commands.get(alias || '');
+        const command = this.client.commands.get(message.command);
 
         const options = {
             guildId: (message.guild || { id: null }).id,
             authorId: message.author.id,
             channelId: message.channel.id,
-            command,
+            command: command ? message.command : alias,
             alias: message.command,
             arguments: message.args,
             date: message.createdTimestamp
