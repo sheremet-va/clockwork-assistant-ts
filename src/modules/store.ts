@@ -27,6 +27,7 @@ store.ensure('emojis', {
 store.ensure('conf', {
     user_sent_gold_status: 'accepted',
     order_completed_status: 'gift_sent',
+    first_buy_amount: 10,
 
     conversion: 400
 });

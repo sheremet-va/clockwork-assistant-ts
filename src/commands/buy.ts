@@ -338,7 +338,7 @@ function getDiscount(message: AssistantMessage, guild: string, roleDiscount: num
     });
 
     if(!orders) {
-        return 10;
+        return parseInt(store.get('conf', 'first_buy_amount'));
     }
 
     const discounts = store.get('discounts') || {};
