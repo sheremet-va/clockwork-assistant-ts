@@ -81,11 +81,16 @@ export class Logger {
         }, null, '1.0.0').catch(err => this.log(err.description || err.message));
     };
     cmd = (description: string, message: AssistantMessage): void => {
+        const alias = this.client.aliases.get(message.command);
+
+        const command = this.client.commands.get(message.command) || this.client.commands.get(alias || '');
+
         const options = {
             guildId: (message.guild || { id: null }).id,
             authorId: message.author.id,
             channelId: message.channel.id,
-            command: message.command,
+            command,
+            alias: message.command,
             arguments: message.args,
             date: message.createdTimestamp
         };

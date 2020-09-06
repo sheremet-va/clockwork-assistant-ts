@@ -13,6 +13,9 @@ import * as Subscriptions from './services/subscriptions';
 
 const readdir = promisify(readSync);
 
+// Seth listening
+import * as Seht from './services/seth';
+
 const names = [
     'logs',
     'configs'
@@ -92,6 +95,8 @@ const init = async (): Promise<void> => {
     Subscriptions.init(client, subscriptions);
 
     client.login(client.config.token);
+
+    Seht.init(client);
 };
 
 init().catch(console.error);
