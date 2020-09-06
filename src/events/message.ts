@@ -142,9 +142,9 @@ async function event(
     let command = '';
 
     // TODO ПЕРЕДЕЛАТЬ ИЛИ Я СДОХНУ ОТ СТЫДА
-    if(args[0] && args[0].startsWith('wtb\n')) {
+    if(args[0] && /^(wtb|buy)/.test(args[0])) {
         command = message.command = 'wtb';
-        args[0] = args[0].replace('wtb\n', '');
+        args[0] = args[0].replace(/^(wtb|buy)\n/, '');
     } else {
         command = message.command = (args.shift() || '').toLowerCase();
     }

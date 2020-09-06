@@ -400,7 +400,7 @@ async function getProducts(
     query: string,
     { discount }: OrderOptions
 ) {
-    const amountMatch = /\d+x/.exec(query);
+    const amountMatch = /\d+[xх]/.exec(query);
     const amount = amountMatch ? parseInt(amountMatch[0].trim()) : 1;
 
     const possibleName = query
@@ -419,13 +419,13 @@ async function getProducts(
         const result = await client.awaitReply(message, embed, 60000 * 5, true);
 
         if(!result) {
-            throw new ClientError('Ваша заявка отменена.', '', message.author);
+            throw new ClientError(`Ваша заявка «${possibleName}» отменена.`, '', message.author);
         }
 
         const price = parseInt(result.replace(/(\s|,|\.)/g, ''));
 
         if(isNaN(price)) {
-            throw new ClientError('Некорректный ответ. Пожалуйста, введите число.', '', message.author);
+            throw new ClientError('Можно вводить только числа. Пожалуйста, оформите заявку заново.', '', message.author);
         }
 
         const conversion = parseInt(store.get('conf', 'conversion')!) - discount;
