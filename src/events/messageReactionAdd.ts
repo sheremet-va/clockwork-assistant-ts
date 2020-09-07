@@ -15,7 +15,7 @@ async function checkRole(client: Assistant, userID: string): Promise<{ prev: str
 
     const guildRole = guildUser.roles.cache.find(role => roles.includes(role.id));
 
-    const role = roles.find(([id]) => guildRole && id === guildRole.id);
+    const role = roles.find(id => guildRole && id === guildRole.id);
 
     const orders = store.filterArray(value => {
         if(typeof value !== 'object' || !('orderID' in value)) {

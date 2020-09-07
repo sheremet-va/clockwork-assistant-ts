@@ -519,11 +519,11 @@ async function showOrders(message: AssistantMessage) {
 
     const description = orders.map((order, i) => {
         const status = {
-            [statusEnded]: ' - в процессе',
+            [statusEnded]: '',
             canceled: ' - отменен'
         };
 
-        return `${i + 1}. ${order.name} (${order.crown_price} крон)${status[order.status] || ''}`;
+        return `${i + 1}. ${order.name} (${order.crown_price} крон)${status[order.status] || '- в процессе'}`;
     });
 
     const sum = orders.reduce((total, order) => {
@@ -536,7 +536,7 @@ async function showOrders(message: AssistantMessage) {
 
     const crownsTitle = description.length.pluralize(['товар', 'товара', 'товаров'], 'ru');
 
-    const messageBought = `Вы купили ${crownsTitle} товаров на общую сумму ${sum} крон:\n${description.join('\n')}`.substr(0, 2000);
+    const messageBought = `Вы купили ${crownsTitle} на общую сумму ${new Intl.NumberFormat('ru-RU').format(sum)} крон:\n${description.join('\n')}`.substr(0, 2000);
     const messageEmpty = 'Вы ничего не покупали';
 
     return message.channel.send(new Embed({
