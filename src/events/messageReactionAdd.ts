@@ -15,7 +15,7 @@ async function checkRole(client: Assistant, userID: string): Promise<{ prev: str
 
     const guildRole = guildUser.roles.cache.find(role => roles.includes(role.id));
 
-    const role = roles.find(id => guildRole && id === guildRole.id);
+    const role = client.config.dealers.roles.find(([id]) => guildRole && id === guildRole.id);
 
     const orders = store.filterArray(value => {
         if(typeof value !== 'object' || !('orderID' in value)) {
@@ -25,9 +25,11 @@ async function checkRole(client: Assistant, userID: string): Promise<{ prev: str
         return value.userID === userID && value.status === store.get('conf', 'order_completed_status');
     });
 
+    const initialCrowns = parseInt(`${(role || [null, '0'])[1]}`);
+
     const crownsBought = orders.reduce((total, order) => {
         return total + parseInt(order.crown_price.replace(/[,\s]+/, ''));
-    }, (role || [null, 0])[1]);
+    }, initialCrowns);
 
     const roleIndex = client.config.dealers.roles.findIndex(([, limit]) => crownsBought <= limit);
 
