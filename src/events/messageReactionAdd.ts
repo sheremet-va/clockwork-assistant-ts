@@ -2,7 +2,7 @@ import { MessageReaction, TextChannel, User } from 'discord.js';
 import { store } from '../modules/store';
 import { Embed } from '../helpers/embed';
 
-async function checkRole(client: Assistant, userID: string): Promise<{ prev: string; cur: string } | undefined> {
+async function checkRole(client: Assistant, userID: string): Promise<string | undefined> {
     const guild = client.guilds.cache.get(client.config.dealers.guildID);
 
     if(!guild) {
@@ -31,16 +31,18 @@ async function checkRole(client: Assistant, userID: string): Promise<{ prev: str
         return total + parseInt(order.crown_price.replace(/[,\s]+/, ''));
     }, initialCrowns);
 
-    const roleIndex = client.config.dealers.roles.findIndex(([, limit]) => crownsBought <= limit);
+    const roleIndex = client.config.dealers.roles.findIndex(([, limit], i) => {
+        const next = client.config.dealers.roles[i + 1] || [null, Infinity];
+        return crownsBought >= limit && crownsBought <= next[1];
+    });
 
     if(roleIndex === -1) {
         return;
     }
 
     const curRole = client.config.dealers.roles[roleIndex];
-    const prevRole = roleIndex === 0 ? '' : client.config.dealers.roles[roleIndex - 1];
 
-    return { prev: prevRole[0], cur: curRole[0] };
+    return curRole[0];
 }
 
 async function event(
@@ -129,12 +131,16 @@ async function event(
                 const guildUser = await reaction.message.guild.members.fetch(order.userID);
 
                 if(guildUser) {
-                    if(!guildUser.roles.cache.has(role.cur)) {
-                        await guildUser.roles.add(role.cur);
-                    }
+                    if(!guildUser.roles.cache.has(role)) {
+                        const removeAll = client.config.dealers.roles.map(([id]) => {
+                            if(guildUser.roles.cache.has(id)) {
+                                guildUser.roles.remove(id);
+                            }
+                        });
 
-                    if(role.prev && guildUser.roles.cache.has(role.prev)) {
-                        await guildUser.roles.remove(role.prev);
+                        Promise.all(removeAll);
+
+                        await guildUser.roles.add(role);
                     }
                 }
             }
