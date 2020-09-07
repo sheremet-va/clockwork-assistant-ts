@@ -519,11 +519,11 @@ async function showOrders(message: AssistantMessage) {
 
     const description = orders.map((order, i) => {
         const status = {
-            [statusEnded]: '',
+            [statusEnded]: ' - завершен',
             canceled: ' - отменен'
         };
 
-        return `${i + 1}. ${order.name} (${order.crown_price} крон)${status[order.status] || '- в процессе'}`;
+        return `${i + 1}. ${order.name} (${order.crown_price} крон)${status[order.status] || ' - в процессе'}`;
     });
 
     const sum = orders.reduce((total, order) => {
