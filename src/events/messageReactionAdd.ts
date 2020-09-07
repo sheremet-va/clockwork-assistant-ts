@@ -2,7 +2,21 @@ import { MessageReaction, TextChannel, User } from 'discord.js';
 import { store } from '../modules/store';
 import { Embed } from '../helpers/embed';
 
-function checkRole(client: Assistant, userID: string): { prev: string; cur: string } | undefined {
+async function checkRole(client: Assistant, userID: string): Promise<{ prev: string; cur: string } | undefined> {
+    const guild = client.guilds.cache.get(client.config.dealers.guildID);
+
+    if(!guild) {
+        return;
+    }
+
+    const guildUser = await guild.members.fetch(userID);
+
+    const roles = client.config.dealers.roles.map(([id]) => id);
+
+    const guildRole = guildUser.roles.cache.find(role => roles.includes(role.id));
+
+    const role = roles.find(([id]) => guildRole && id === guildRole.id);
+
     const orders = store.filterArray(value => {
         if(typeof value !== 'object' || !('orderID' in value)) {
             return false;
@@ -13,7 +27,7 @@ function checkRole(client: Assistant, userID: string): { prev: string; cur: stri
 
     const crownsBought = orders.reduce((total, order) => {
         return total + parseInt(order.crown_price.replace(/[,\s]+/, ''));
-    }, 0);
+    }, (role || [null, 0])[1]);
 
     const roleIndex = client.config.dealers.roles.findIndex(([, limit]) => crownsBought <= limit);
 
@@ -107,7 +121,7 @@ async function event(
                 description: store.get('messages', 'order_done_description').render(order)
             }));
 
-            const role = checkRole(client, order.userID);
+            const role = await checkRole(client, order.userID);
 
             if(role && reaction.message.guild) {
                 const guildUser = await reaction.message.guild.members.fetch(order.userID);

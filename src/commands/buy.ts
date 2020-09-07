@@ -510,6 +510,41 @@ async function getProducts(
     };
 }
 
+async function showOrders(message: AssistantMessage) {
+    const orders = store.filterArray(o => {
+        return typeof o === 'object' && 'userID' in o && o.userID === message.author.id;
+    });
+
+    const statusEnded = store.get('conf', 'order_completed_status');
+
+    const description = orders.map((order, i) => {
+        const status = {
+            [statusEnded]: ' - в процессе',
+            canceled: ' - отменен'
+        };
+
+        return `${i + 1}. ${order.name} (${order.crown_price} крон)${status[order.status] || ''}`;
+    });
+
+    const sum = orders.reduce((total, order) => {
+        if(order.status !== statusEnded) {
+            return total;
+        }
+
+        return total + parseInt(order.crown_price.replace(/[,\s]+/, ''));
+    }, 0);
+
+    const crownsTitle = description.length.pluralize(['товар', 'товара', 'товаров'], 'ru');
+
+    const messageBought = `Вы купили ${crownsTitle} товаров на общую сумму ${sum} крон:\n${description.join('\n')}`.substr(0, 2000);
+    const messageEmpty = 'Вы ничего не покупали';
+
+    return message.channel.send(new Embed({
+        color: 'help',
+        description: description.length ? messageBought : messageEmpty
+    }).setAuthor('Последние заказы ' + message.author.tag, message.author.avatarURL() || message.author.defaultAvatarURL));
+}
+
 async function run(
     client: Assistant,
     message: AssistantMessage,
@@ -532,6 +567,12 @@ async function run(
             return;
         }
 
+        return;
+    }
+    
+    if(args[0] === 'show') {
+        await showOrders(message);
+        
         return;
     }
 
