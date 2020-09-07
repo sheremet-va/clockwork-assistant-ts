@@ -521,7 +521,7 @@ async function showOrders(message: AssistantMessage) {
 
     const description = orders.map((order, i) => {
         const status = {
-            [statusEnded]: ' - завершен',
+            [statusEnded]: '',
             canceled: ' - отменен'
         };
 
