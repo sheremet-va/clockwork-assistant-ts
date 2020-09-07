@@ -337,8 +337,10 @@ function getDiscount(message: AssistantMessage, guild: string, roleDiscount: num
         return typeof val === 'object' && val.userID === userID;
     });
 
-    if(!orders) {
-        return parseInt(store.get('conf', 'first_buy_amount'));
+    const firstTimeDiscount = parseInt(store.get('conf', 'first_buy_amount'));
+
+    if(!orders && firstTimeDiscount) {
+        return firstTimeDiscount;
     }
 
     const discounts = store.get('discounts') || {};
@@ -691,7 +693,7 @@ async function run(
         const ORDER_CONFIRMED = store.get('messages', 'order_confirmed');
 
         await message.author.send(new Embed({
-            color: 'success',
+            color: 'help',
             description: ORDER_CONFIRMED.render({ ...order, orderID: orderMessage.id })
         }));
     } catch(err) {
