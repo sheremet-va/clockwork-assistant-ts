@@ -106,7 +106,7 @@ async function confirmOrder(client: Assistant, message: AssistantMessage) {
         await message.author.send(new Embed({
             color: 'help',
             description: store.get('messages', 'user_sent_gold_response').render(order)
-        }).setFooter(`Менеджер @${order.seller}. Заказ: ${orderID}`, message.author.avatarURL() || message.author.defaultAvatarURL));
+        }).setFooter(`Менеджер @${order.seller}. Заказ: ${orderID}`, seller.avatarURL() || seller.defaultAvatarURL));
     } catch(err) {
         client.logger.error('SellerOrdersError',`Не удалось отправить сообщение менеджеру ${order.seller} (${orderID}): ${err.message}.`, err.stack);
     }
