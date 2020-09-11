@@ -418,7 +418,7 @@ async function getProducts(
             description: `Не удалось найти товар по запросу «${possibleName}». Пожалуйста, введите стоимость товара в кронах.`
         }).setFooter(`Запрос «${possibleName}»`);
 
-        const result = await client.awaitReply(message, embed, 60000 * 5, true);
+        const result = await client.awaitReply(message, embed, 60000 * 60, true);
 
         if(!result) {
             throw new ClientError(`Ваша заявка «${possibleName}» отменена.`, '', message.author);
@@ -468,13 +468,13 @@ async function getProducts(
                 data.map(({ ru, en }: { ru: string; en: string }, i: number) => `• ${i + 1}. ${ru}${ru !== en ? ` (${en})` : ''}`).join('\n')
         }).setFooter(`Запрос «${possibleName}»`);
 
-        const result = await client.awaitReply(message, embed, 60000, true);
+        const result = await client.awaitReply(message, embed, 60000 * 60, true);
 
         if(!result) {
             throw new ClientError(
                 'Заказ отменен.',
                 '',
-                message.channel
+                message.author
             );
         }
 
@@ -553,13 +553,6 @@ async function run(
     _: RequestInfo,
     args: string []
 ): Promise<void | false> {
-    const author = message.author.id;
-    const managers = store.get('managers') as string[];
-
-    if(!managers.some(name => name.split(':')[0] === author)) {
-        return;
-    }
-
     if(args[0] === 'conf') {
         const result = await configure(client, message, args);
 
