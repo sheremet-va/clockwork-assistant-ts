@@ -583,7 +583,7 @@ async function run(
         query = query.replace(discordUserMatch[0], '@' + (discordUser ? discordUser.user.username : message.author.username));
     }
 
-    const userMatch = /@[\w_\-\s\d]+/.exec(query);
+    const userMatch = /@[\w_\-\s\d'`]+/.exec(query);
 
     if(!userMatch) {
         throw new ClientError('Не найден @userID. Убедитесь, что вы указали свой ник после символа "@".', '', message.author);
