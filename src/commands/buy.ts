@@ -420,6 +420,14 @@ async function getProducts(
 
         const result = await client.awaitReply(message, embed, 60000 * 60, true);
 
+        if(result === 'BOT_INTERRUPT') {
+            throw new ClientError(
+                'Оформление предыдущего заказа прервано новым заказом.',
+                '',
+                message.author
+            );
+        }
+
         if(!result) {
             throw new ClientError(`Ваша заявка «${possibleName}» отменена.`, '', message.author);
         }
@@ -468,7 +476,15 @@ async function getProducts(
                 data.map(({ ru, en }: { ru: string; en: string }, i: number) => `• ${i + 1}. ${ru}${ru !== en ? ` (${en})` : ''}`).join('\n')
         }).setFooter(`Запрос «${possibleName}»`);
 
-        const result = await client.awaitReply(message, embed, 60000 * 60, true);
+        const result = await client.awaitReply(message, embed, 60000 * 60, true, true);
+
+        if(result === 'BOT_INTERRUPT') {
+            throw new ClientError(
+                'Оформление предыдущего заказа прервано новым заказом.',
+                '',
+                message.author
+            );
+        }
 
         if(!result) {
             throw new ClientError(
