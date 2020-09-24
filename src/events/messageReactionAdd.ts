@@ -32,7 +32,7 @@ async function checkRole(client: Assistant, userID: string): Promise<string | un
             return total + parseInt(order.crown_price.replace(/[,\s]+/, ''));
         }, 0);
 
-        const totalCrowns = crownsBought > initialCrowns ? crownsBought : initialCrowns + crownsBought;
+        const totalCrowns = crownsBought >= initialCrowns ? crownsBought : initialCrowns + crownsBought;
 
         const roleIndex = client.config.dealers.roles.findIndex(([, limit], i) => {
             const next = client.config.dealers.roles[i + 1] || [null, Infinity];
