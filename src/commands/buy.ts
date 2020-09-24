@@ -418,15 +418,15 @@ async function getProducts(
             description: `Не удалось найти товар по запросу «${possibleName}». Пожалуйста, введите стоимость товара в кронах.`
         }).setFooter(`Запрос «${possibleName}»`);
 
-        const result = await client.awaitReply(message, embed, 60000 * 60, true, true);
+        const result = await client.awaitReply(message, embed, 60000 * 60, true);
 
-        if(result === 'BOT_INTERRUPT') {
-            throw new ClientError(
-                'Оформление предыдущего заказа прервано новым заказом.',
-                '',
-                message.author
-            );
-        }
+        // if(result === 'BOT_INTERRUPT') {
+        //     throw new ClientError(
+        //         'Оформление предыдущего заказа прервано новым заказом.',
+        //         '',
+        //         message.author
+        //     );
+        // }
 
         if(!result) {
             throw new ClientError(`Ваша заявка «${possibleName}» отменена.`, '', message.author);
@@ -476,15 +476,15 @@ async function getProducts(
                 data.map(({ ru, en }: { ru: string; en: string }, i: number) => `• ${i + 1}. ${ru}${ru !== en ? ` (${en})` : ''}`).join('\n')
         }).setFooter(`Запрос «${possibleName}»`);
 
-        const result = await client.awaitReply(message, embed, 60000 * 60, true, true);
+        const result = await client.awaitReply(message, embed, 60000 * 60, true);
 
-        if(result === 'BOT_INTERRUPT') {
-            throw new ClientError(
-                'Оформление предыдущего заказа прервано новым заказом.',
-                '',
-                message.author
-            );
-        }
+        // if(result === 'BOT_INTERRUPT') {
+        //     throw new ClientError(
+        //         'Оформление предыдущего заказа прервано новым заказом.',
+        //         '',
+        //         message.author
+        //     );
+        // }
 
         if(!result) {
             throw new ClientError(
