@@ -418,7 +418,7 @@ async function getProducts(
             description: `Не удалось найти товар по запросу «${possibleName}». Пожалуйста, введите стоимость товара в кронах.`
         }).setFooter(`Запрос «${possibleName}»`);
 
-        const result = await client.awaitReply(message, embed, 60000 * 60, true);
+        const result = await client.awaitReply(message, embed, 60000 * 60, true, true);
 
         if(result === 'BOT_INTERRUPT') {
             throw new ClientError(
