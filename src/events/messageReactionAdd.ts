@@ -4,52 +4,52 @@ import { Embed } from '../helpers/embed';
 
 async function checkRole(client: Assistant, userID: string): Promise<string | undefined> {
     return;
-    const guild = client.guilds.cache.get(client.config.dealers.guildID);
-
-    if(!guild) {
-        return;
-    }
-
-    try {
-        const guildUser = await guild.members.fetch(userID);
-
-        const roles = client.config.dealers.roles.map(([id]) => id);
-
-        const guildRole = guildUser.roles.cache.find(role => roles.includes(role.id));
-
-        const role = client.config.dealers.roles.find(([id]) => guildRole && id === guildRole.id);
-
-        const orders = store.filterArray(value => {
-            if(typeof value !== 'object' || !('orderID' in value)) {
-                return false;
-            }
-
-            return value.userID === userID && value.status === store.get('conf', 'order_completed_status');
-        });
-
-        const initialCrowns = parseInt(`${(role || [null, '0'])[1]}`);
-
-        const crownsBought = orders.reduce((total, order) => {
-            return total + parseInt(order.crown_price.replace(/[,\s]+/, ''));
-        }, 0);
-
-        const totalCrowns = crownsBought >= initialCrowns ? crownsBought : initialCrowns + crownsBought;
-
-        const roleIndex = client.config.dealers.roles.findIndex(([, limit], i) => {
-            const next = client.config.dealers.roles[i + 1] || [null, Infinity];
-            return totalCrowns >= limit && totalCrowns <= next[1];
-        });
-
-        if(roleIndex === -1) {
-            return;
-        }
-
-        const curRole = client.config.dealers.roles[roleIndex];
-
-        return curRole[0];
-    } catch {
-        return;
-    }
+    // const guild = client.guilds.cache.get(client.config.dealers.guildID);
+    //
+    // if(!guild) {
+    //     return;
+    // }
+    //
+    // try {
+    //     const guildUser = await guild.members.fetch(userID);
+    //
+    //     const roles = client.config.dealers.roles.map(([id]) => id);
+    //
+    //     const guildRole = guildUser.roles.cache.find(role => roles.includes(role.id));
+    //
+    //     const role = client.config.dealers.roles.find(([id]) => guildRole && id === guildRole.id);
+    //
+    //     const orders = store.filterArray(value => {
+    //         if(typeof value !== 'object' || !('orderID' in value)) {
+    //             return false;
+    //         }
+    //
+    //         return value.userID === userID && value.status === store.get('conf', 'order_completed_status');
+    //     });
+    //
+    //     const initialCrowns = parseInt(`${(role || [null, '0'])[1]}`);
+    //
+    //     const crownsBought = orders.reduce((total, order) => {
+    //         return total + parseInt(order.crown_price.replace(/[,\s]+/, ''));
+    //     }, 0);
+    //
+    //     const totalCrowns = crownsBought >= initialCrowns ? crownsBought : initialCrowns + crownsBought;
+    //
+    //     const roleIndex = client.config.dealers.roles.findIndex(([, limit], i) => {
+    //         const next = client.config.dealers.roles[i + 1] || [null, Infinity];
+    //         return totalCrowns >= limit && totalCrowns <= next[1];
+    //     });
+    //
+    //     if(roleIndex === -1) {
+    //         return;
+    //     }
+    //
+    //     const curRole = client.config.dealers.roles[roleIndex];
+    //
+    //     return curRole[0];
+    // } catch {
+    //     return;
+    // }
 }
 
 async function event(
