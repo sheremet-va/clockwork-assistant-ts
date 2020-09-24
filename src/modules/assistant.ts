@@ -158,7 +158,7 @@ class AssistantBase extends Client {
     };
 
     awaitReply = async (msg: Message, question: string | Embed, limit = 60000, isDm = false): Promise<string | false> => {
-        const filter = (m: Message): boolean => m.author.id === msg.author.id;
+        const filter = (m: Message): boolean => m.author.id === msg.author.id || m.author.id === (this.user && this.user.id);
 
         const sended = await (isDm ? msg.author : msg.channel).send(question);
 
@@ -168,6 +168,10 @@ class AssistantBase extends Client {
 
             if(!first) {
                 return false;
+            }
+
+            if(first.author.id === (this.user && this.user.id)) {
+                return 'BOT_INTERRUPT';
             }
 
             return first.content.trim();

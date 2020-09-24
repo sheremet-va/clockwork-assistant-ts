@@ -655,6 +655,10 @@ async function run(
 
     const reply = await client.awaitReply(message, embed, 60000 * 60, true);
 
+    if(reply === 'BOT_INTERRUPT') {
+        return;
+    }
+
     if(!reply || !/да|yes|\+/i.exec(reply)) {
         await message.author.send(new Embed({
             color: 'error',
