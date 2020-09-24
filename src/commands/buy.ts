@@ -653,7 +653,7 @@ async function run(
         image: products.length === 1 ? (products[0].image || null) : null
     }).setFooter(`Покупатель: ${user}`, message.author.avatarURL() || message.author.defaultAvatarURL);
 
-    const reply = await client.awaitReply(message, embed, 60000 * 60, true);
+    const reply = await client.awaitReply(message, embed, 60000 * 60, true, true);
 
     if(reply === 'BOT_INTERRUPT') {
         return;
