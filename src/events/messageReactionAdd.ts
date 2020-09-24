@@ -3,6 +3,7 @@ import { store } from '../modules/store';
 import { Embed } from '../helpers/embed';
 
 async function checkRole(client: Assistant, userID: string): Promise<string | undefined> {
+    return;
     const guild = client.guilds.cache.get(client.config.dealers.guildID);
 
     if(!guild) {
