@@ -183,6 +183,59 @@ async function processMessages(client: Assistant, message: AssistantMessage, arg
     }
 }
 
+
+
+function getOrdersByUserId(userId: string) {
+    const orders = store.filterArray(o => {
+        return typeof o === 'object' && 'userID' in o && o.userID === userId;
+    });
+
+    const statusEnded = store.get('conf', 'order_completed_status');
+
+    const description = orders.map((order, i) => {
+        const status = {
+            [statusEnded]: '',
+            canceled: ' - отменен'
+        };
+
+        return `${i + 1}. ${order.name} (${order.crown_price} крон)${order.status in status ? status[order.status] : ' - в процессе'}`;
+    });
+
+    const sum = orders.reduce((total, order) => {
+        if(order.status !== statusEnded) {
+            return total;
+        }
+
+        return total + parseInt(order.crown_price.replace(/[,\s]+/, ''));
+    }, 0);
+
+    return {
+        description,
+        sum
+    };
+}
+
+function getUserOrders(client: Assistant, userId: string) {
+    const {
+        description,
+        sum
+    } = getOrdersByUserId(userId);
+
+    const user = client.users.cache.get(userId);
+
+    const tag = (user || { tag: userId }).tag;
+
+    const crownsTitle = description.length.pluralize(['товар', 'товара', 'товаров'], 'ru');
+
+    const messageBought = `Покупатель ${tag} купил ${crownsTitle} на общую сумму ${new Intl.NumberFormat('ru-RU').format(sum)} крон:\n${description.join('\n')}`.substr(0, 2000);
+    const messageEmpty = `${tag} ничего не приобретал.`;
+
+    return new Embed({
+        color: 'help',
+        description: sum > 0 ? messageBought : messageEmpty,
+    }).setFooter(`Покупатель: ${tag}`, user ? (user.avatarURL() || user.defaultAvatarURL) : undefined);
+}
+
 function processEmoji(client: Assistant, args: string[]): Embed {
     const [code, value] = args;
 
@@ -326,6 +379,8 @@ async function configure(client: Assistant, message: AssistantMessage, args: str
         return await updateStore(client, message);
     } else if(action === 'settings') {
         return changeSettings(actionArgs);
+    } else if(action === 'user') {
+        return getUserOrders(client, actionArgs[0]);
     }
 
     return false;
@@ -529,28 +584,10 @@ async function getProducts(
 }
 
 async function showOrders(message: AssistantMessage) {
-    const orders = store.filterArray(o => {
-        return typeof o === 'object' && 'userID' in o && o.userID === message.author.id;
-    });
-
-    const statusEnded = store.get('conf', 'order_completed_status');
-
-    const description = orders.map((order, i) => {
-        const status = {
-            [statusEnded]: '',
-            canceled: ' - отменен'
-        };
-
-        return `${i + 1}. ${order.name} (${order.crown_price} крон)${order.status in status ? status[order.status] : ' - в процессе'}`;
-    });
-
-    const sum = orders.reduce((total, order) => {
-        if(order.status !== statusEnded) {
-            return total;
-        }
-
-        return total + parseInt(order.crown_price.replace(/[,\s]+/, ''));
-    }, 0);
+    const {
+        description,
+        sum
+    } = getOrdersByUserId(message.author.id);
 
     const crownsTitle = description.length.pluralize(['товар', 'товара', 'товаров'], 'ru');
 
@@ -562,6 +599,7 @@ async function showOrders(message: AssistantMessage) {
         description: description.length ? messageBought : messageEmpty
     }).setAuthor('Последние заказы ' + message.author.tag, message.author.avatarURL() || message.author.defaultAvatarURL));
 }
+
 
 async function run(
     client: Assistant,
