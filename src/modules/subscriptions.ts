@@ -184,11 +184,7 @@ class Subscriptions {
                 this.emit('permissionError', { permission, channel, guild, settings });
             }, this);
 
-        if (errors.length) {
-            return false;
-        }
-
-        return true;
+        return !errors.length;
     }
 
     emit(name: string, data: unknown): void {

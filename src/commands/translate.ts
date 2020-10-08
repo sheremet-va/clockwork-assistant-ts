@@ -64,7 +64,10 @@ async function run(
         return false;
     }
 
-    const encoded = encodeURI(args.join(' ')).replace('&', '%26').replace('#', '%23').replace('#', '%24');
+    const encoded = encodeURI(args.join(' '))
+        .replace('&', '%26')
+        .replace('#', '%23')
+        .replace('#', '%24');
 
     const response = await client.request(`/translate?id=${id}&search=${encoded}`, channel, '1.0.0');
 

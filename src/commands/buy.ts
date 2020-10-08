@@ -1,3 +1,7 @@
+// Этот огромный файл не должен быть таким огромным
+// Как это вообще произошло?
+// TODO Вынести весь функционал в отдельного бота
+
 import { TextChannel } from 'discord.js';
 
 import { store } from '../modules/store';
@@ -297,7 +301,11 @@ async function updateStore(client: Assistant, message: AssistantMessage): Promis
     }));
 
     try {
-        const { data } = await client.request('/store/update?id=' + message.ownerId, message.channel, '1.0.0');
+        const { data } = await client.request({
+            url: '/store/update?id=' + message.ownerId,
+            method: 'post',
+            data: {}
+        }, message.channel, '1.0.0');
 
         await msg.edit(new Embed({
             color: 'success',
