@@ -42,7 +42,7 @@ async function event(client: Assistant, packet: Packet): Promise<void> {
     const reaction = fetched.reactions.cache.get(emoji);
     const reactionById = fetched.reactions.cache.get(packet.d.emoji.id || emoji);
 
-    const user = client.users.cache.get(packet.d.user_id);
+    const user = await client.users.fetch(packet.d.user_id);
 
     if (reaction && user) reaction.users.cache.set(packet.d.user_id, user);
     if (reactionById && user) reactionById.users.cache.set(packet.d.user_id, user);

@@ -1,42 +1,223 @@
 import Enmap from 'enmap';
+import axios, { AxiosInstance, AxiosResponse } from 'axios';
+
+import { config } from '../config';
 
 const homedir = require('os').homedir();
+import fs from 'fs';
 
-const store = new Enmap({
+const storeOld = new Enmap({
     name: 'store',
     dataDir: homedir + '/ca-data'
 });
 
-store.ensure('messages', {});
-store.ensure('messages', 'Ваш заказ с номером {{orderID}} на «{{name}}» принят! Перешлите @{{seller}} {{gold_price}} золотых по внутри-игровой почте.', 'accepted');
-store.ensure('messages', '@{{seller}} получает золото за «{{name}}». Ожидайте подарок.', 'gold_received');
-store.ensure('messages', 'Подарок отправлен! Ваш заказ на «{{name}}» выполнен.', 'gift_sent');
-store.ensure('messages', 'К сожалению, ваш заказ был отклонен менеджером.', 'canceled');
-store.ensure('messages', 'Менеджер ушёл проверять письмо с золотом', 'user_sent_gold_response');
+function migrate() {
+    const messages = storeOld.get('messages');
+    const discounts = storeOld.get('discounts');
+    const discount_status = storeOld.get('discount_status');
+    const managers = storeOld.get('managers');
+    const emojis = storeOld.get('emojis');
+    const conf = storeOld.get('conf');
 
-store.ensure('discounts', {});
-store.ensure('discount_status', true);
-store.ensure('managers', ['215358861647806464:Fellorion']);
-store.ensure('emojis', {
-    accepted: 'kajiit_dealer',
-    gold_received: 'kajiit_bankeer',
-    gift_sent: 'skooma',
-    canceled: '❌'
-});
+    const jsonConfig = [
+        {
+            key: 'messages',
+            value: messages
+        },
+        {
+            key: 'discounts',
+            value: discounts
+        },
+        {
+            key: 'discount_status',
+            value: discount_status
+        },
+        {
+            key: 'managers',
+            value: managers
+        },
+        {
+            key: 'emojis',
+            value: emojis
+        },
+        {
+            key: 'conf',
+            value: conf
+        },
+    ];
 
-store.ensure('conf', {
-    user_sent_gold_status: 'accepted',
-    order_completed_status: 'gift_sent',
-    first_buy_amount: 10,
 
-    conversion: 400
-});
+    fs.writeFile('sellers_config.json', JSON.stringify(jsonConfig), console.error);
 
-store.ensure('messages', '{{user}} заказывает «{{name}}» ({{crown_price}} крон) за {{gold_price}} золотых (конверсия {{conversion}}/1). Гильдия: {{guild}}. Источник: {{source}}.', 'order_description');
-store.ensure('messages', 'Ваш заказ принят! Бот напишет вам данные для перевода, как только менеджер подтвердит заказ.', 'order_confirmed');
-store.ensure('messages', 'Заказ для «{{user}}» выполнен', 'order_done_title');
-store.ensure('messages', '{{seller}} успешно выполняет заказ. {{user}} наслаждается своим новым подарком - «{{name}}»!', 'order_done_description');
-store.ensure('messages', 'Покупатель {{user}} отправил золото на игровой ник @{{seller}} за предмет «{{name}}» (номер заказа: {{orderID}}).', 'user_sent_gold');
-store.ensure('messages', 'Пожалуйста, подтвердите заказ! Вы хотите купить «{{name}}» ({{crown_price}} крон) за {{gold_price}} золотых (конверсия {{conversion}}/1)?', 'confirm');
+    const jsonOrders = storeOld.array().filter(order => typeof order === 'object' && order && 'orderID' in order);
+
+    fs.writeFile('sellers_orders.json', JSON.stringify(jsonOrders), console.error);
+}
+
+migrate();
+
+function request(): AxiosInstance {
+    const baseURL = config.core;
+
+    return axios.create({
+        baseURL,
+        headers: {
+            'Accept-Version': '1.0.0'
+        }
+    });
+}
+
+class StoreRequest {
+
+    public async get<T = unknown>(key: string, path?: string): Promise<T> {
+        const result = await request().get('/store/config/' + key + '?path=' + path);
+
+        return result.data.data;
+    }
+
+    public async set(key: string, value: unknown, path?: string): Promise<unknown> {
+        const data = { path, value };
+
+        const result = await request().post('/store/config/' + key, data);
+
+        return result.data.data;
+    }
+
+    private async update(key: string, value: unknown, action: string): Promise<AxiosResponse> {
+        const data = { value };
+
+        return request().post('/store/config/' + action + '/' + key, data);
+    }
+
+    public async remove(key: string, value: unknown): Promise<unknown> {
+        const result = await this.update(key, value, 'remove');
+
+        return result.data.data;
+    }
+
+    public async push(key: string, value: unknown): Promise<unknown> {
+        const result = await this.update(key, value, 'push');
+
+        return result.data.data;
+    }
+}
+
+export type Lifecycle = [string, string, number]; // status, userID, timestamp
+
+export type Order = {
+    userID: string;
+    products: {
+        name: string;
+        link: string;
+        image: string;
+        crown_price: number;
+        gold_price: number;
+        amount: number;
+    }[];
+    conversion: number;
+    discount: number;
+    crown_price: string;
+    gold_price: string;
+    name: string;
+    guild: string;
+    message: string;
+    user: string;
+    status: string;
+    seller: null | string;
+    sellerID: null | string;
+    source: string;
+    lifecycle: Lifecycle[];
+    orderID: string;
+}
+
+class Store extends StoreRequest {
+    private cache: Record<string, unknown> = {};
+
+    private enableCache = [
+        'managers',
+        'discounts',
+        'discount_status',
+        'emojis',
+        'conf',
+        'messages'
+    ];
+
+    public async updateOrderStatus(orderID: string, status: string, userID: string): Promise<unknown> {
+        const lifecycle = [status, userID, new Date().valueOf()];
+
+        const result = await request().post('/store/orders/status', { order: { status, orderID }, lifecycle });
+
+        return result.data.data;
+    }
+
+    public async updateOrder(order: Partial<Order>, status: string, userID: string): Promise<{ orderID: string }> {
+        const data = {
+            ...order,
+            status
+        };
+
+        const lifecycle = [status, userID, new Date().valueOf()];
+
+        const result = await request().post('/store/orders', { order: data, lifecycle });
+
+        return result.data.data;
+    }
+
+    public async createOrder(order: Order): Promise<{ orderID: string }> {
+        const { data } = await request().put('/store/orders', { order });
+
+        return data.data;
+    }
+
+    public async getOrdersByUser(userID: string, filter?: { status: string }): Promise<Order[]> {
+        const filterQuery = Object.entries(filter || {}).map(([code, name]) => `${code}=${name}`);
+
+        const { data } = await request().get<{ data: Order[] }>('/store/orders/user/' + userID + '?' + filterQuery);
+
+        return data.data;
+    }
+
+    public async getOrderById(orderID: string): Promise<Order | null> {
+        try {
+            const { data } = await request().get<{ data: Order }>('/store/orders/' + orderID);
+
+            return data.data;
+        } catch {
+            return null;
+        }
+    }
+
+    public async get(key: 'discount_status'): Promise<boolean>;
+    public async get(key: 'emojis'): Promise<Record<string, string>>;
+    public async get(key: 'discounts'): Promise<Record<string, string>>;
+    public async get(key: 'managers'): Promise<string[]>;
+    public async get(key: 'messages'): Promise<Record<string, string>>;
+    public async get(key: 'messages', path: string): Promise<string>;
+    public async get(key: 'conf'): Promise<Record<string, string | number>>;
+    public async get(key: 'conf', path: string): Promise<string | number>;
+    public async get<T = unknown>(key: string, path?: string): Promise<T> {
+        if(this.cache[key]) {
+            const value = this.cache[key];
+
+            if(!path) {
+                return value as T;
+            } else if(typeof value === 'object' && value && Reflect.has(value, path)) {
+                return Reflect.get(value, path);
+            }
+        }
+
+        return super.get<T>(key, path);
+    }
+
+    public async set(key: string, value: unknown, path?: string): Promise<void> {
+        const result = await super.set(key, value, path);
+
+        if(this.enableCache.includes(key)) {
+            this.cache[key] = result;
+        }
+    }
+}
+
+const store = new Store();
 
 export { store };

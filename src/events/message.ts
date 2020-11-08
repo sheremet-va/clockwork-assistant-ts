@@ -71,41 +71,36 @@ async function getInfo(client: Assistant, cmd: { conf: { path?: string } }, mess
 }
 
 async function confirmOrder(client: Assistant, message: AssistantMessage) {
-    const order = store.find(val => {
-        return (
-            typeof val === 'object' &&
-            'status' in val &&
-            val.userID === message.author.id &&
-            val.status === 'accepted' &&
-            val.sellerID
-        );
-    });
+    const orders = await store.getOrdersByUser(message.author.id, { status: 'accepted' });
 
-    if(!order) {
-        return;
-    }
+    const order = orders.find(order => order.sellerID);
+
+    if(!order) return;
 
     const orderID = order.orderID;
-    const sellerID = order.sellerID;
+    const sellerID = order.sellerID!;
 
     try {
         const seller = await client.users.fetch(sellerID);
 
         const url = `https://discordapp.com/channels/${client.config.dealers.guildID}/${client.config.dealers.managerChannelID}/${orderID}`;
 
+        const MESSAGE_SENT_GOLD = await store.get('messages', 'user_sent_gold');
+
         await seller.send(new Embed({
             color: 'help',
             url,
             title: `Золото по заказу ${orderID} отправлено`,
-            description: store.get('messages', 'user_sent_gold').render(order)
+            description: MESSAGE_SENT_GOLD.render(order)
         }).setFooter(`Покупатель: ${order.user}`));
 
-        store.set(orderID, 'user_sent_gold', 'status');
-        store.push(orderID, ['user_sent_gold', message.author.id, new Date().valueOf()], 'lifecycle');
+        await store.updateOrderStatus(order.orderID, 'user_sent_gold', message.author.id);
+
+        const MESSAGE_USER_SENT_GOLD_RESPONSE = await store.get('messages', 'user_sent_gold_response');
 
         await message.author.send(new Embed({
             color: 'help',
-            description: store.get('messages', 'user_sent_gold_response').render(order)
+            description: MESSAGE_USER_SENT_GOLD_RESPONSE.render(order)
         }).setFooter(`Менеджер @${seller.tag}. Заказ: ${orderID}`, seller.avatarURL() || seller.defaultAvatarURL));
     } catch(err) {
         client.logger.error('SellerOrdersError',`Не удалось отправить сообщение менеджеру ${order.seller} (${orderID}): ${err.message}.`, err.stack);

@@ -4,7 +4,7 @@
 
 import { TextChannel } from 'discord.js';
 
-import { store } from '../modules/store';
+import { Lifecycle, Order, store } from '../modules/store';
 
 import { ClientError } from '../modules/error';
 import { AssistantMessage, Configuration, RequestInfo } from '../types';
@@ -46,6 +46,10 @@ function getHelp(): Embed {
         {
             name: 'get',
             value: 'возвращает доступную информацию по заказу. ID заказа такой же, что и ID сообщения\n`-buy conf get 123443422453`'
+        },
+        {
+            name: 'user',
+            value: 'возвращает доступную информацию по заказам покупателя. \n`-buy conf user 123443422453`'
         }
     ];
 
@@ -56,8 +60,8 @@ function getHelp(): Embed {
     });
 }
 
-function addManagers(args: string[]): Embed {
-    const managers = store.get('managers') as string[];
+async function addManagers(args: string[]): Promise<Embed> {
+    const managers = await store.get('managers');
 
     args.forEach(manager => {
         const [discordId] = manager.split(':');
@@ -80,23 +84,25 @@ function addManagers(args: string[]): Embed {
     });
 }
 
-function removeManagers(args: string[]): Embed {
+async function removeManagers(args: string[]): Promise<Embed> {
     args.forEach(manager => {
         store.remove('managers', manager);
     });
 
+    const managers = await store.get('managers');
+
     return new Embed({
         color: 'help',
         description: args.length ? ('Были удалены следующие менеджеры: \n• ' + args.join(', \n• ') + '\n') : ''
-            + 'Текущие менеджеры: \n• ' + store.get('managers').join(', \n• ')
+            + 'Текущие менеджеры: \n• ' + managers.join(', \n• ')
     });
 }
 
-function processDiscount(args: string[], storage: string): Embed {
+async function processDiscount(args: string[]): Promise<Embed> {
     const [discount, ...guilds] = args;
 
     if(discount === 'disable') {
-        store.set('discount_status', false);
+        await store.set('discount_status', false);
 
         return new Embed({
             color: 'help',
@@ -105,7 +111,7 @@ function processDiscount(args: string[], storage: string): Embed {
     }
 
     if(discount === 'enable') {
-        store.set('discount_status', true);
+        await store.set('discount_status', true);
 
         return new Embed({
             color: 'help',
@@ -116,18 +122,18 @@ function processDiscount(args: string[], storage: string): Embed {
     if(!guilds.length) {
         return new Embed({
             color: 'help',
-            description: `На данный момент для ${storage === 'discounts' ? 'гильдий' : 'ролей'} выставлены следующие скидки:\n` +
-                Object.entries(store.get(storage)).map(([name, disc]) => `• ${name}: ${disc} золотых.`).join('\n')
+            description: 'На данный момент для гильдий выставлены следующие скидки:\n' +
+                Object.entries(await store.get('discounts')).map(([name, disc]) => `• ${name}: ${disc} золотых.`).join('\n')
         });
     }
 
     const guildsNames = guilds.join(' ').split(',');
 
-    guildsNames.forEach(guild => store.set(storage, discount, guild.trim()));
+    guildsNames.forEach(guild => store.set('discounts', discount, guild.trim()));
 
     return new Embed({
         color: 'help',
-        description: `Для ${storage === 'discounts' ? 'гильдий' : 'роли'} ${guildsNames.join(', ')} была выставлена скидка ${discount} золотых.`
+        description: `Для гильдий ${guildsNames.join(', ')} была выставлена скидка ${discount} золотых.`
     });
 }
 
@@ -136,7 +142,7 @@ async function processMessages(client: Assistant, message: AssistantMessage, arg
     const resultMessage = messageArgs.join(' ');
 
     if(!code) {
-        const fields = Object.entries(store.get('messages')).map(([code, message]) => {
+        const fields = Object.entries(await store.get('messages')).map(([code, message]) => {
             return {
                 name: code,
                 value: `${message}`,
@@ -154,7 +160,7 @@ async function processMessages(client: Assistant, message: AssistantMessage, arg
     const was = new Embed({
         title: 'Прежнее сообщение',
         color: 'help',
-        description: store.get('messages', code)
+        description: await store.get('messages', code)
     });
 
     if(!resultMessage.length) {
@@ -173,7 +179,7 @@ async function processMessages(client: Assistant, message: AssistantMessage, arg
     const reply = await client.awaitReply(message, 'Вы действительно хотите изменить сообщение? (Да/Нет)');
 
     if(reply === 'Да' || reply === 'да') {
-        store.set('messages', resultMessage, code);
+        await store.set('messages', resultMessage, code);
 
         return new Embed({
             description: `Сообщение ${code} сохранено`,
@@ -187,14 +193,10 @@ async function processMessages(client: Assistant, message: AssistantMessage, arg
     }
 }
 
+async function getOrdersByUserId(userId: string) {
+    const orders = await store.getOrdersByUser(userId);
 
-
-function getOrdersByUserId(userId: string) {
-    const orders = store.filterArray(o => {
-        return typeof o === 'object' && 'userID' in o && o.userID === userId;
-    });
-
-    const statusEnded = store.get('conf', 'order_completed_status');
+    const statusEnded = await store.get('conf', 'order_completed_status');
 
     const description = orders.map((order, i) => {
         const status = {
@@ -210,7 +212,7 @@ function getOrdersByUserId(userId: string) {
             return total;
         }
 
-        return total + parseInt(order.crown_price.replace(/[,\s]+/, ''));
+        return total + order.products.reduce((sum, product) => sum + product.crown_price, 0);
     }, 0);
 
     return {
@@ -219,11 +221,11 @@ function getOrdersByUserId(userId: string) {
     };
 }
 
-function getUserOrders(client: Assistant, userId: string) {
+async function getUserOrders(client: Assistant, userId: string) {
     const {
         description,
         sum
-    } = getOrdersByUserId(userId);
+    } = await getOrdersByUserId(userId);
 
     const user = client.users.cache.get(userId);
 
@@ -231,7 +233,10 @@ function getUserOrders(client: Assistant, userId: string) {
 
     const crownsTitle = description.length.pluralize(['товар', 'товара', 'товаров'], 'ru');
 
-    const messageBought = `Покупатель ${tag} купил ${crownsTitle} на общую сумму ${new Intl.NumberFormat('ru-RU').format(sum)} крон:\n${description.join('\n')}`.substr(0, 2000);
+    const price = new Intl.NumberFormat('ru-RU').format(sum);
+    const list = description.join('\n');
+
+    const messageBought = `Покупатель ${tag} купил ${crownsTitle} на общую сумму ${price} крон:\n${list}`.substr(0, 2000);
     const messageEmpty = `${tag} ничего не приобретал.`;
 
     return new Embed({
@@ -240,13 +245,33 @@ function getUserOrders(client: Assistant, userId: string) {
     }).setFooter(`Покупатель: ${tag}`, user ? (user.avatarURL() || user.defaultAvatarURL) : undefined);
 }
 
-function processEmoji(client: Assistant, args: string[]): Embed {
+async function showOrders(message: AssistantMessage) {
+    const {
+        description,
+        sum
+    } = await getOrdersByUserId(message.author.id);
+
+    const crownsTitle = description.length.pluralize(['товар', 'товара', 'товаров'], 'ru');
+
+    const price = new Intl.NumberFormat('ru-RU').format(sum);
+    const list = description.join('\n');
+
+    const messageBought = `Вы купили ${crownsTitle} на общую сумму ${price} крон:\n${list}`.substr(0, 2000);
+    const messageEmpty = 'Вы ничего не покупали';
+
+    return message.channel.send(new Embed({
+        color: 'help',
+        description: description.length ? messageBought : messageEmpty
+    }).setAuthor('Последние заказы ' + message.author.tag, message.author.avatarURL() || message.author.defaultAvatarURL));
+}
+
+async function processEmoji(client: Assistant, args: string[]): Promise<Embed> {
     const [code, value] = args;
 
-    const guild = client.guilds.cache.get('579001087944687635');
+    const guild = client.guilds.cache.get(client.config.dealers.guildID);
 
     if(!code) {
-        const emojis = store.get('emojis');
+        const emojis = await store.get('emojis');
         const description = Object.entries(emojis).map(([code, emoji]) => {
             const clEmoji = guild && guild.emojis.cache.find(e => e.name === emoji);
             return `• Код "${code}": ${clEmoji || `:${emoji}:`} \`${emoji}\``;
@@ -269,7 +294,7 @@ function processEmoji(client: Assistant, args: string[]): Embed {
         });
     }
 
-    store.set('emojis', emoji, code);
+    await store.set('emojis', emoji, code);
 
     const clEmoji = guild && guild.emojis.cache.find(e => e.name === emoji);
 
@@ -279,8 +304,8 @@ function processEmoji(client: Assistant, args: string[]): Embed {
     });
 }
 
-function getOrder(orderID: string, property: string): Embed | string {
-    const order = store.get(orderID);
+async function getOrder(orderID: string, property: keyof Order): Promise<Embed | string> {
+    const order = await store.getOrderById(orderID);
 
     if(!order) {
         return new Embed({
@@ -322,11 +347,13 @@ async function updateStore(client: Assistant, message: AssistantMessage): Promis
     return false;
 }
 
-function changeSettings(args: string[]): Embed {
+async function changeSettings(args: string[]): Promise<Embed> {
     const [setting, value] = args;
 
+    const config = await store.get('conf');
+
     if(!setting) {
-        const fields = Object.entries(store.get('conf')).map(([code, value]) => {
+        const fields = Object.entries(config).map(([code, value]) => {
             return {
                 name: code,
                 value: `${value}`,
@@ -341,14 +368,14 @@ function changeSettings(args: string[]): Embed {
         });
     }
 
-    if(!store.has('conf', setting)) {
+    if(!(setting in config)) {
         return new Embed({
             color: 'error',
             description: 'Нет такой настройки.'
         });
     }
 
-    store.set('conf', value, setting);
+    await store.set('conf', value, setting);
 
     return new Embed({
         color: 'help',
@@ -357,7 +384,7 @@ function changeSettings(args: string[]): Embed {
 }
 
 async function configure(client: Assistant, message: AssistantMessage, args: string[]): Promise<false | Embed | string> {
-    const managers = store.ensure('managers', [client.config.ownerID + ':Fellorion']) as string[];
+    const managers = await store.get('managers');
     const author = message.author.id;
 
     if(!managers.find(name => name.includes(author))) {
@@ -376,13 +403,13 @@ async function configure(client: Assistant, message: AssistantMessage, args: str
     } else if(action === 'removeManager' || action === 'removeManagers') {
         return removeManagers(actionArgs);
     } else if(action === 'discount') {
-        return processDiscount(actionArgs, 'discounts');
+        return processDiscount(actionArgs);
     } else if(action === 'message' || action === 'messages') {
         return await processMessages(client, message, actionArgs);
     } else if(action === 'emoji') {
         return processEmoji(client, actionArgs);
     } else if(action === 'get') {
-        return getOrder(actionArgs[0], actionArgs[1]);
+        return getOrder(actionArgs[0], actionArgs[1] as keyof Order);
     } else if(action === 'update') {
         return await updateStore(client, message);
     } else if(action === 'settings') {
@@ -394,19 +421,17 @@ async function configure(client: Assistant, message: AssistantMessage, args: str
     return false;
 }
 
-function getDiscount(message: AssistantMessage, guild: string, roleDiscount: number): number {
+async function getDiscount(message: AssistantMessage, guild: string, roleDiscount: number): Promise<number> {
     const userID = message.author.id;
-    const orders = store.find(val => {
-        return typeof val === 'object' && val.userID === userID;
-    });
+    const orders = await store.getOrdersByUser(userID);
 
-    const firstTimeDiscount = parseInt(store.get('conf', 'first_buy_amount'));
+    const firstTimeDiscount = parseInt(await store.get('conf', 'first_buy_amount') as string);
 
     if(!orders && firstTimeDiscount) {
         return firstTimeDiscount;
     }
 
-    const discounts = store.get('discounts') || {};
+    const discounts = (await store.get('discounts')) || {};
 
     const discount = (Object.entries<string>(discounts))
         .find(([name]) => guild && name.toLowerCase().includes(guild.toLowerCase()));
@@ -417,7 +442,8 @@ function getDiscount(message: AssistantMessage, guild: string, roleDiscount: num
 async function deleteMessage(message: AssistantMessage): Promise<void> {
     try {
         await message.delete();
-    } catch(e) {}
+        // eslint-disable-next-line no-empty
+    } catch {}
 }
 
 function encode(query: string): string {
@@ -425,6 +451,10 @@ function encode(query: string): string {
         .replace('&', '%26')
         .replace('#', '%23')
         .replace('#', '%24');
+}
+
+async function getConversion(discount: number): Promise<number> {
+    return parseInt(await store.get('conf', 'conversion') as string) - discount;
 }
 
 async function getRoleDiscount(client: Assistant, message: AssistantMessage): Promise<number> {
@@ -501,7 +531,7 @@ async function getProducts(
             throw new ClientError('Можно вводить только числа. Пожалуйста, оформите заявку заново.', '', message.author);
         }
 
-        const conversion = parseInt(store.get('conf', 'conversion')!) - discount;
+        const conversion = await getConversion(discount);
 
         const crown_price = price * amount;
         const gold_price = crown_price * conversion;
@@ -576,7 +606,7 @@ async function getProducts(
         link = item.link;
     }
 
-    const conversion = parseInt(store.get('conf', 'conversion')!) - discount;
+    const conversion = await getConversion(discount);
 
     const crown_price = cost * amount;
     const gold_price = crown_price * conversion;
@@ -590,24 +620,6 @@ async function getProducts(
         amount
     };
 }
-
-async function showOrders(message: AssistantMessage) {
-    const {
-        description,
-        sum
-    } = getOrdersByUserId(message.author.id);
-
-    const crownsTitle = description.length.pluralize(['товар', 'товара', 'товаров'], 'ru');
-
-    const messageBought = `Вы купили ${crownsTitle} на общую сумму ${new Intl.NumberFormat('ru-RU').format(sum)} крон:\n${description.join('\n')}`.substr(0, 2000);
-    const messageEmpty = 'Вы ничего не покупали';
-
-    return message.channel.send(new Embed({
-        color: 'help',
-        description: description.length ? messageBought : messageEmpty
-    }).setAuthor('Последние заказы ' + message.author.tag, message.author.avatarURL() || message.author.defaultAvatarURL));
-}
-
 
 async function run(
     client: Assistant,
@@ -660,9 +672,9 @@ async function run(
         .replace(discountMatch ? discountMatch[0] : '', '')
         .trim();
 
-    const discountStatus = store.get('discount_status');
+    const discountStatus = await store.get('discount_status');
     const discountRole = await getRoleDiscount(client, message);
-    const discount = discountStatus ? getDiscount(message, discountGuild, discountRole) : 0;
+    const discount = discountStatus ? await getDiscount(message, discountGuild, discountRole) : 0;
 
     const products = [];
 
@@ -682,8 +694,8 @@ async function run(
         products.push(product);
     }
 
-    const conversion = parseInt(store.get('conf', 'conversion')!) - discount;
-    const CONFIRM = store.get('messages', 'confirm')! + '\nВведите «`+`» для подтверждения.\nЧтобы отменить заказ, введите «`-`».';
+    const conversion = await getConversion(discount);
+    const CONFIRM = (await store.get('messages', 'confirm')) + '\nВведите «`+`» для подтверждения.\nЧтобы отменить заказ, введите «`-`».';
 
     const crown_price = products.reduce((sum, { crown_price }) => sum + crown_price, 0);
     const gold_price = products.reduce((sum, { gold_price }) => sum + gold_price, 0);
@@ -703,7 +715,9 @@ async function run(
         seller: null,
         sellerID: null,
         source: message.guild ? message.guild.name : 'Личные сообщения',
-        lifecycle: [['in_moderation', message.author.id, new Date().valueOf()]]
+        lifecycle: [
+            ['in_moderation', message.author.id, new Date().valueOf()] as Lifecycle
+        ]
     };
 
     const embed = new Embed({
@@ -730,10 +744,12 @@ async function run(
 
     const mng_channel = client.channels.cache.get(client.config.dealers.managerChannelID)! as TextChannel;
 
+    const ORDER_DESCRIPTION = await store.get('messages', 'order_description');
+
     const managerMessage = new Embed({
         title: `${message.author.tag} делает заказ`,
         color: 'help',
-        description: store.get('messages', 'order_description').render(order),
+        description: ORDER_DESCRIPTION.render(order),
     })
         .setFooter(`Покупатель: ${user}`, message.author.avatarURL() || message.author.defaultAvatarURL);
 
@@ -745,9 +761,9 @@ async function run(
 
         orderMessage.edit(edited);
 
-        store.set(orderMessage.id, { ...order, orderID: orderMessage.id });
+        await store.createOrder({ ...order, orderID: orderMessage.id });
 
-        const ORDER_CONFIRMED = store.get('messages', 'order_confirmed');
+        const ORDER_CONFIRMED = await store.get('messages', 'order_confirmed');
 
         await message.author.send(new Embed({
             color: 'help',

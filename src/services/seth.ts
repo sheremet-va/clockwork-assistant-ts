@@ -7,7 +7,7 @@ const PORT = 3033;
 
 export function init(client: Assistant): void {
     app.get('/managers', async() => {
-        const managers = store.get('managers') as string[];
+        const managers = await store.get('managers');
 
         return managers.map(name => name.split(':')[0]);
     });

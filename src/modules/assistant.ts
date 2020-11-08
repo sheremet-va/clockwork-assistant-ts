@@ -261,7 +261,7 @@ class AssistantBase extends Client {
             url
         };
 
-        const cleanUrl = settings.url.replace(this.config.back, 'TRUSTED');
+        const cleanUrl = decodeURI(settings.url.replace(this.config.back, 'TRUSTED'));
 
         if (tries > LIMIT_REPEAT_GET) {
             throw new ClientError(`Number of attempts to get "${cleanUrl}" exceeded`);
