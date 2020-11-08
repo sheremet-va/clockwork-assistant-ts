@@ -45,9 +45,7 @@ function handle(client: Assistant, subscriptions: Subscriptions): void {
             permission: name
         };
 
-        const message = errorString;
-
-        const embed = new ErrorEmbed(message.render(render));
+        const embed = new ErrorEmbed(errorString.render(render));
 
         // TODO add catch
         guild.owner.send(embed);

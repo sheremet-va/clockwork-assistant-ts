@@ -11,14 +11,19 @@ export default class extends Subscriptions implements Subscription {
         super(client, info, 'drops');
     }
 
+    getKey(time: number, settings: Settings): string {
+        const { language, timezone } = settings;
+
+        return `${time}:${language}-${timezone}`;
+    }
+
     async notify(): Promise<void> {
         const CACHE = {} as Record<string, Embed>;
 
         const time = this.data.startDate;
 
         const promises = this.guilds.map(async ({ guild, settings }) => {
-            const { language, timezone } = settings;
-            const key = `${time}:${language}-${timezone}`;
+            const key = this.getKey(time, settings);
 
             if (!(key in CACHE)) {
                 CACHE[key] = await drops.embedOne(this, guild.id, settings);
@@ -30,8 +35,7 @@ export default class extends Subscriptions implements Subscription {
         await Promise.allSettled(promises);
 
         this.send((settings: Settings) => {
-            const { language, timezone } = settings;
-            const key = `${time}:${language}-${timezone}`;
+            const key = this.getKey(time, settings);
 
             return CACHE[key];
         });

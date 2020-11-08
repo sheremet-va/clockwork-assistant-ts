@@ -620,16 +620,14 @@ async function run(
 
         if(result instanceof Embed || typeof result === 'string') {
             await message.channel.send(result);
-
-            return;
         }
 
         return;
     }
-    
+
     if(args[0] === 'show') {
         await showOrders(message);
-        
+
         return;
     }
 

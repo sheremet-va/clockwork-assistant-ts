@@ -3,7 +3,7 @@
 import { TextChannel, Message, BitFieldResolvable, PermissionString } from 'discord.js';
 
 import { AssistantMessage } from '../types';
-import { ErrorEmbed } from '../modules/error';
+import { ClientError, ErrorEmbed } from '../modules/error';
 import { store } from '../modules/store';
 import { Embed } from '../helpers/embed';
 
@@ -221,21 +221,41 @@ async function event(
 
     const info = await getInfo(client, cmd, message);
 
-    const result = await cmd.run(client, message, info, args);
+    try {
+        const result = await cmd.run(client, message, info, args);
 
-    if (typeof result === 'boolean' && !result) {
-        const helpCmd = client.commands.get('help')!;
+        if (typeof result === 'boolean' && !result) {
+            const helpCmd = client.commands.get('help')!;
 
-        helpCmd.run(client, message, info, [message.command]);
-    }
+            helpCmd.run(client, message, info, [message.command]);
+        }
 
-    if (typeof result === 'string') {
-        const customCmd = client.commands.get(result);
+        if (typeof result === 'string') {
+            const customCmd = client.commands.get(result);
 
-        if(customCmd) {
-            const info = await getInfo(client, customCmd, message);
+            if(customCmd) {
+                const info = await getInfo(client, customCmd, message);
 
-            customCmd.run(client, message, info, args);
+                customCmd.run(client, message, info, args);
+            }
+        }
+    } catch (err) {
+        if (err instanceof ClientError) {
+            const message = err.message || err.description;
+
+            err.channel
+                ? err.channel.send(new ErrorEmbed(message))
+                : client.logger.error('ClientErrorRejection', message);
+        }
+
+        if(err instanceof Error) {
+            const message = err.message;
+
+            client.logger.error(
+                'Unhandled rejection',
+                message.replace(new RegExp(`${__dirname}/`, 'g'), './'),
+                err.stack
+            );
         }
     }
 }
