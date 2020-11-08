@@ -1,60 +1,6 @@
-import Enmap from 'enmap';
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 
 import { config } from '../config';
-
-const homedir = require('os').homedir();
-import fs from 'fs';
-
-const storeOld = new Enmap({
-    name: 'store',
-    dataDir: homedir + '/ca-data'
-});
-
-function migrate() {
-    const messages = storeOld.get('messages');
-    const discounts = storeOld.get('discounts');
-    const discount_status = storeOld.get('discount_status');
-    const managers = storeOld.get('managers');
-    const emojis = storeOld.get('emojis');
-    const conf = storeOld.get('conf');
-
-    const jsonConfig = [
-        {
-            key: 'messages',
-            value: messages
-        },
-        {
-            key: 'discounts',
-            value: discounts
-        },
-        {
-            key: 'discount_status',
-            value: discount_status
-        },
-        {
-            key: 'managers',
-            value: managers
-        },
-        {
-            key: 'emojis',
-            value: emojis
-        },
-        {
-            key: 'conf',
-            value: conf
-        },
-    ];
-
-
-    fs.writeFile('sellers_config.json', JSON.stringify(jsonConfig), console.error);
-
-    const jsonOrders = storeOld.array().filter(order => typeof order === 'object' && order && 'orderID' in order);
-
-    fs.writeFile('sellers_orders.json', JSON.stringify(jsonOrders), console.error);
-}
-
-migrate();
 
 function request(): AxiosInstance {
     const baseURL = config.core;
