@@ -109,7 +109,7 @@ const run = async (
             regServer.test(key) || aliases.some(alias => regServer.test(alias))
         ) as [keyof Statuses, string[]];
 
-    if(serverEntry) {
+    if(!serverEntry) {
         return false;
     }
 
