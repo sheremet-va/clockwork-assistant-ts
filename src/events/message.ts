@@ -222,7 +222,7 @@ async function event(
         if (typeof result === 'boolean' && !result) {
             const helpCmd = client.commands.get('help')!;
 
-            helpCmd.run(client, message, info, [message.command]);
+            await helpCmd.run(client, message, info, [message.command]);
         }
 
         if (typeof result === 'string') {
@@ -231,7 +231,7 @@ async function event(
             if(customCmd) {
                 const info = await getInfo(client, customCmd, message);
 
-                customCmd.run(client, message, info, args);
+                await customCmd.run(client, message, info, args);
             }
         }
     } catch (err) {
@@ -239,7 +239,7 @@ async function event(
             const message = err.message || err.description;
 
             err.channel
-                ? err.channel.send(new ErrorEmbed(message))
+                ? await err.channel.send(new ErrorEmbed(message))
                 : client.logger.error('ClientErrorRejection', message);
         }
 
