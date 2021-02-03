@@ -3,7 +3,7 @@
 import { TextChannel, Message, BitFieldResolvable, PermissionString } from 'discord.js';
 
 import { AssistantMessage } from '../types';
-import { ClientError, ErrorEmbed } from '../modules/error';
+import { ErrorEmbed } from '../modules/error';
 import { store } from '../modules/store';
 import { Embed } from '../helpers/embed';
 
@@ -235,15 +235,13 @@ async function event(
             }
         }
     } catch (err) {
-        if (err instanceof ClientError) {
+        if (err.name === 'ClientError') {
             const message = err.message || err.description;
 
             err.channel
                 ? await err.channel.send(new ErrorEmbed(message))
                 : client.logger.error('ClientErrorRejection', message);
-        }
-
-        if(err instanceof Error) {
+        } else if(err instanceof Error) {
             const message = err.message;
 
             client.logger.error(
