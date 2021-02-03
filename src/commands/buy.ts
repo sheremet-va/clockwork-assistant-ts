@@ -464,23 +464,23 @@ async function getRoleDiscount(client: Assistant, message: AssistantMessage): Pr
         return 0;
     }
 
-    const user = await dealersGuild.members.fetch(message.author.id);
+    try {
+        const user = await dealersGuild.members.fetch(message.author.id);
 
-    if(!user) {
+        const roles = client.config.dealers.roles;
+
+        const userRole = roles.find(([id]) => {
+            return user.roles.cache.has(id);
+        });
+
+        if(!userRole) {
+            return 0;
+        }
+
+        return userRole[2];
+    } catch {
         return 0;
     }
-
-    const roles = client.config.dealers.roles;
-
-    const userRole = roles.find(([id]) => {
-        return user.roles.cache.has(id);
-    });
-
-    if(!userRole) {
-        return 0;
-    }
-
-    return userRole[2];
 }
 
 // WTB 4x "Crowns Summerset" 3000 crowns для UserID: @etozhegdvs /AVEM
