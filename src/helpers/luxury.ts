@@ -35,10 +35,12 @@ function build(items: LuxuryItem[], merchantsLang: string): string {
 
         // TODO redo for more LANGUAGES
         const money = new Intl.NumberFormat(isRu ? 'ru-RU' : 'en-US').format(price);
-        const titles = (merchantsLang.split('+') as language[]);
+        const langs = (merchantsLang.split('+') as language[]);
 
-        const title = titles
-            .filter((name, i) => titles.indexOf(name) === i)
+        const names = langs.map((lang) => name[lang]);
+
+        const title = langs
+            .filter((lang, i) => name[lang] && names.indexOf(name[lang]) === i)
             .map((lang, i) => {
                 const first = i === 0;
                 const strong = first ? '**' : '';
