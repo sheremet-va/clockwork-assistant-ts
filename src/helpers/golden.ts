@@ -49,10 +49,10 @@ function build(
             return `${canSellString}${strong}${title}${strong} (${traits})`;
         }).join('\n');
 
-        const cost = [
+        const cost = price.gold > 0 && price.ap > 0 ? [
             new Intl.NumberFormat(isRu ? 'ru-RU' : 'en-US').format(price.gold) + ' GOLD',
             new Intl.NumberFormat(isRu ? 'ru-RU' : 'en-US').format(price.ap) + ' AP'
-        ].join(' • ');
+        ].join(' • ') : '';
 
         return `• ${title}\n${cost} ${hasTypesString}`;
     }).join('\n');
