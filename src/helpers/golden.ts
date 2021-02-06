@@ -54,7 +54,7 @@ function build(
             new Intl.NumberFormat(isRu ? 'ru-RU' : 'en-US').format(price.ap) + ' AP'
         ].join(' • ') : '';
 
-        return `• ${title}\n${cost} ${hasTypesString}`;
+        return `• ${title}${cost ? '\n' + cost : ''} ${hasTypesString}`;
     }).join('\n');
 }
 
