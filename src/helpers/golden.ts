@@ -40,14 +40,18 @@ function build(
     return items.map(({ name, price, canSell, hasTypes, trait }) => {
         const hasTypesString = hasTypes ? `(${utils.translate(has_types, language)})` : '';
 
-        const title = (merchantsLang.split('+') as language[]).map((lang, i) => {
-            const strong = i === 0 ? '**' : '';
-            const canSellString = canSell && i === 0 ? '\\*' : '';
-            const title = name[lang] || name.en;
-            const traits = trait.map(t => t[lang] || t.en).join('/');
+        const titles = (merchantsLang.split('+') as language[]);
 
-            return `${canSellString}${strong}${title}${strong} (${traits})`;
-        }).join('\n');
+        const title = titles
+            .filter((name, i) => titles.indexOf(name) === i)
+            .map((lang, i) => {
+                const strong = i === 0 ? '**' : '';
+                const canSellString = canSell && i === 0 ? '\\*' : '';
+                const title = name[lang] || name.en;
+                const traits = trait.map(t => t[lang] || t.en).join('/');
+
+                return `${canSellString}${strong}${title}${strong} (${traits})`;
+            }).join('\n');
 
         const cost = price.gold > 0 && price.ap > 0 ? [
             new Intl.NumberFormat(isRu ? 'ru-RU' : 'en-US').format(price.gold) + ' GOLD',

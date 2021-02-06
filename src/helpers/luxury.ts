@@ -35,16 +35,19 @@ function build(items: LuxuryItem[], merchantsLang: string): string {
 
         // TODO redo for more LANGUAGES
         const money = new Intl.NumberFormat(isRu ? 'ru-RU' : 'en-US').format(price);
+        const titles = (merchantsLang.split('+') as language[]);
 
-        const title = (merchantsLang.split('+') as language[]).map((lang, i) => {
-            const first = i === 0;
-            const strong = first ? '**' : '';
-            const isNewString = isNew && first ? ':new: ' : '';
-            const goldString = first ? `: ${money} g.` : '';
-            const title = name[lang] || name.en;
+        const title = titles
+            .filter((name, i) => titles.indexOf(name) === i)
+            .map((lang, i) => {
+                const first = i === 0;
+                const strong = first ? '**' : '';
+                const isNewString = isNew && first ? ':new: ' : '';
+                const goldString = first ? `: ${money} g.` : '';
+                const title = name[lang] || name.en;
 
-            return `${isNewString}${strong}${title}${strong}${goldString}`;
-        }).join('\n');
+                return `${isNewString}${strong}${title}${strong}${goldString}`;
+            }).join('\n');
 
         // const title = utils.build(name, merchantsLang, '**{{ first }}** - _{{ second }}_');
 
