@@ -13,6 +13,8 @@ import axios, { AxiosRequestConfig } from 'axios';
 import { Settings } from './subscriptions';
 import { Embed } from '../helpers/embed';
 
+import { clean } from '../helpers/utils';
+
 const LIMIT_REPEAT_GET = 3;
 
 const prefixes = new Enmap<string, string>('prefixes');
@@ -187,11 +189,8 @@ class AssistantBase extends Client {
     };
 
     clean = (text: string): string => {
-        return text
-            .replace(/`/g, '`' + String.fromCharCode(8203))
-            .replace(/@/g, '@' + String.fromCharCode(8203))
-            .replace(this.config.token, 'mfa.VkO_2G4Qv3T--NO--lWetW_tjND--TOKEN--QFTm6YGtzq9PH--4U--tG0')
-            .substr(0, 1950);
+        return clean(text)
+            .replace(this.config.token, 'mfa.VkO_2G4Qv3T--NO--lWetW_tjND--TOKEN--QFTm6YGtzq9PH--4U--tG0');
     };
 
     loadCommand = async ({ name, aliases }: { name: string; aliases: string[] }): Promise<false | string> => {
@@ -297,6 +296,7 @@ class AssistantBase extends Client {
 }
 
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type RenderObject = Record<string, Record<string, string>> | Record<string, any>;
 
 declare global {

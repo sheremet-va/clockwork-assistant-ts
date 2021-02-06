@@ -1,4 +1,5 @@
 import { MessageEmbed, EmbedField } from 'discord.js';
+import { clean } from './utils';
 
 interface Params {
     fields?: EmbedField[];
@@ -108,7 +109,7 @@ class Embed extends MessageEmbed {
         this.setAuthor(author)
             .addFields(fields)
             .setTitle(title)
-            .setDescription(description)
+            .setDescription(clean(description))
             .setFooter(footer)
             .setURL(url || '');
 

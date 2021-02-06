@@ -52,4 +52,11 @@ function entries<O>(o: O): ([keyof O, Exclude<O[keyof O], undefined>])[] {
     return Object.entries(o) as ([keyof O, Exclude<O[keyof O], undefined>])[];
 }
 
-export { translate, notUndefined, keys, entries, build };
+function clean(text: string): string {
+    return text
+        .replace(/`/g, '`' + String.fromCharCode(8203))
+        .replace(/@/g, '@' + String.fromCharCode(8203))
+        .substr(0, 2040);
+}
+
+export { translate, notUndefined, keys, entries, build, clean };
