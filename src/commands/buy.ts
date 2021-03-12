@@ -63,17 +63,17 @@ function getHelp(): Embed {
 async function addManagers(args: string[]): Promise<Embed> {
     const managers = await store.get('managers');
 
-    args.forEach(manager => {
+    await Promise.all(args.map(async manager => {
         const [discordId] = manager.split(':');
 
         const having = managers.find(name => name.includes(discordId));
 
         if(having) {
-            store.remove('managers', having);
+            await store.remove('managers', having);
         }
 
-        store.push('managers', manager);
-    });
+        await store.push('managers', manager);
+    }));
 
     return new Embed({
         color: 'help',
@@ -85,9 +85,9 @@ async function addManagers(args: string[]): Promise<Embed> {
 }
 
 async function removeManagers(args: string[]): Promise<Embed> {
-    args.forEach(manager => {
-        store.remove('managers', manager);
-    });
+    await Promise.all(args.map(manager => {
+        return store.remove('managers', manager);
+    }));
 
     const managers = await store.get('managers');
 
@@ -645,7 +645,7 @@ async function run(
 
     await deleteMessage(message);
 
-    let query = args.join(' ');
+    let query = args.join(' ').replace(/(^[\s\u200b]*|[\s\u200b]*$)/g, '');
 
     const discordUserMatch = /<@!?(\d+)>/.exec(query);
 
