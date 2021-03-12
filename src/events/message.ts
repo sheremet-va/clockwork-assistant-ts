@@ -170,10 +170,6 @@ async function event(
 
     const args = message.args = formattedArgs.length && formattedArgs[0] !== '' ? formattedArgs : [];
 
-    if (!message.member && message.guild) {
-        await message.guild.members.fetch(message.author);
-    }
-
     const alias = client.aliases.get(message.command);
 
     const cmd = client.commands.get(message.command) || client.commands.get(alias || '');

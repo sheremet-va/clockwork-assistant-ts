@@ -11,6 +11,8 @@ import { notUndefined } from './helpers/utils';
 
 import * as Subscriptions from './services/subscriptions';
 
+import heapdump from 'heapdump';
+
 const readdir = promisify(readSync);
 
 // Seth listening
@@ -97,6 +99,12 @@ const init = async (): Promise<void> => {
     client.login(client.config.token);
 
     Seht.init(client);
+
+    const HEAT_INTERVAL_2_DAYS = 1000 * 60 * 60 * 24 * 2;
+
+    setInterval(() => {
+        heapdump.writeSnapshot();
+    }, HEAT_INTERVAL_2_DAYS);
 };
 
 init().catch(console.error);
