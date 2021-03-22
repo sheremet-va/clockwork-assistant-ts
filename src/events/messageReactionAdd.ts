@@ -1,6 +1,6 @@
 import { MessageReaction, TextChannel, User } from 'discord.js';
 import { store } from '../modules/store';
-import { Embed } from '../helpers/embed';
+import { Embed, EmbedColor } from '../helpers/embed';
 
 // async function checkRole(client: Assistant, userID: string): Promise<string | undefined> {
 //     return;
@@ -113,7 +113,7 @@ async function event(
 
     try {
         await orderUser.send(new Embed({
-            color: 'help',
+            color: EmbedColor.Help,
             description: message
         }).setFooter(`Менеджер @${user.username}#${user.discriminator}. Заказ: ${order.orderID}`, user.avatarURL() || user.defaultAvatarURL));
 
@@ -134,7 +134,7 @@ async function event(
             const description = await store.get('messages', 'order_done_description');
 
             await channelDone.send(new Embed({
-                color: 'help',
+                color: EmbedColor.Help,
                 title: title.render(order),
                 description: description.render(order)
             }));

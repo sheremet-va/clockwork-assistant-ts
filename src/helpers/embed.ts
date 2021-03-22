@@ -79,7 +79,7 @@ class Embed extends MessageEmbed {
             .setTitle(title)
             .setDescription(clean(description))
             .setFooter(footer)
-            .addFields(fields)
+            .addFields(fields);
 
         if (image) {
             this.setImage(image);

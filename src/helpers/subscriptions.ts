@@ -1,4 +1,4 @@
-import { Embed } from '../helpers/embed';
+import { Embed, EmbedColor, Emoji } from '../helpers/embed';
 import { TextChannel } from 'discord.js';
 
 import { entries, notUndefined } from '../helpers/utils';
@@ -42,8 +42,8 @@ async function embed(
 
     return new Embed({
         author: title,
-        color: 'success',
-        description: Embed.emojis.success + success_channel
+        color: EmbedColor.Success,
+        description: Emoji.Success + (success_channel as string)
     });
 }
 

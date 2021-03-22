@@ -1,4 +1,4 @@
-import { Embed } from './embed';
+import { Embed, EmbedColor } from './embed';
 import { Settings } from '../modules/subscriptions';
 
 import { translate, Translations, SubsTranslations } from './utils';
@@ -110,7 +110,7 @@ function buildEmbed(
         value: `${strings.mask}: ${urlMask(masks[vendor as Vendors], pledgesLang)}`
     }));
 
-    embed.setColor('pledges').addFields(fields);
+    embed.setColor(EmbedColor.Pledges).addFields(fields);
 
     if (tData) {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

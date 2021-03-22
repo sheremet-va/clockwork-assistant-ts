@@ -9,7 +9,7 @@ import { Lifecycle, Order, store } from '../modules/store';
 import { ClientError } from '../modules/error';
 import { AssistantMessage, Configuration, RequestInfo } from '../types';
 
-import { Embed } from '../helpers/embed';
+import { Embed, EmbedColor } from '../helpers/embed';
 
 const ESO_URL = 'https://www.elderscrollsonline.com';
 
@@ -54,7 +54,7 @@ function getHelp(): Embed {
     ];
 
     return new Embed({
-        color: 'help',
+        color: EmbedColor.Help,
         title: 'Доступные команды',
         fields: fields.map(f => ({ ...f, inline: false }))
     });
@@ -76,7 +76,7 @@ async function addManagers(args: string[]): Promise<Embed> {
     }));
 
     return new Embed({
-        color: 'help',
+        color: EmbedColor.Help,
         description: args.length ? ('Были добавлены следующие менеджеры: \n• ' + args.join(', \n• ') + '\n') : ''
             + 'Текущие менеджеры: \n• ' + (args.length ? args.join(', \n• ') : managers.join(', \n• '))
             + '\nЧтобы добавить новых менеджеров, введите их ники в формате "discordId:userId" (без кавычек и знака @, через пробел). '
@@ -92,7 +92,7 @@ async function removeManagers(args: string[]): Promise<Embed> {
     const managers = await store.get('managers');
 
     return new Embed({
-        color: 'help',
+        color: EmbedColor.Help,
         description: args.length ? ('Были удалены следующие менеджеры: \n• ' + args.join(', \n• ') + '\n') : ''
             + 'Текущие менеджеры: \n• ' + managers.join(', \n• ')
     });
@@ -105,7 +105,7 @@ async function processDiscount(args: string[]): Promise<Embed> {
         await store.set('discount_status', false);
 
         return new Embed({
-            color: 'help',
+            color: EmbedColor.Help,
             description: 'Все скидки отключены. Чтобы включить скидки, введите команду `-buy conf discount enable`.'
         });
     }
@@ -114,14 +114,14 @@ async function processDiscount(args: string[]): Promise<Embed> {
         await store.set('discount_status', true);
 
         return new Embed({
-            color: 'help',
+            color: EmbedColor.Help,
             description: 'Скидки включены. Чтобы отключить скидки, введите команду `-buy conf discount disable`.'
         });
     }
 
     if(!guilds.length) {
         return new Embed({
-            color: 'help',
+            color: EmbedColor.Help,
             description: 'На данный момент для гильдий выставлены следующие скидки:\n' +
                 Object.entries(await store.get('discounts')).map(([name, disc]) => `• ${name}: ${disc} золотых.`).join('\n')
         });
@@ -132,7 +132,7 @@ async function processDiscount(args: string[]): Promise<Embed> {
     guildsNames.forEach(guild => store.set('discounts', discount, guild.trim()));
 
     return new Embed({
-        color: 'help',
+        color: EmbedColor.Help,
         description: `Для гильдий ${guildsNames.join(', ')} была выставлена скидка ${discount} золотых.`
     });
 }
@@ -151,7 +151,7 @@ async function processMessages(client: Assistant, message: AssistantMessage, arg
         });
 
         return new Embed({
-            color: 'help',
+            color: EmbedColor.Help,
             title: 'Доступные коды сообщений',
             fields
         });
@@ -159,7 +159,7 @@ async function processMessages(client: Assistant, message: AssistantMessage, arg
 
     const was = new Embed({
         title: 'Прежнее сообщение',
-        color: 'help',
+        color: EmbedColor.Help,
         description: await store.get('messages', code)
     });
 
@@ -169,7 +169,7 @@ async function processMessages(client: Assistant, message: AssistantMessage, arg
 
     const will = new Embed({
         title: 'Будущее сообщение',
-        color: 'help',
+        color: EmbedColor.Help,
         description: resultMessage
     });
 
@@ -183,12 +183,12 @@ async function processMessages(client: Assistant, message: AssistantMessage, arg
 
         return new Embed({
             description: `Сообщение ${code} сохранено`,
-            color: 'help'
+            color: EmbedColor.Help
         });
     } else {
         return new Embed({
             description: 'Операция отменена.',
-            color: 'help'
+            color: EmbedColor.Help
         });
     }
 }
@@ -240,7 +240,7 @@ async function getUserOrders(client: Assistant, userId: string) {
     const messageEmpty = `${tag} ничего не приобретал.`;
 
     return new Embed({
-        color: 'help',
+        color: EmbedColor.Help,
         description: sum > 0 ? messageBought : messageEmpty,
     }).setFooter(`Покупатель: ${tag}`, user ? (user.avatarURL() || user.defaultAvatarURL) : undefined);
 }
@@ -260,7 +260,7 @@ async function showOrders(message: AssistantMessage) {
     const messageEmpty = 'Вы ничего не покупали';
 
     return message.channel.send(new Embed({
-        color: 'help',
+        color: EmbedColor.Help,
         description: description.length ? messageBought : messageEmpty
     }).setAuthor('Последние заказы ' + message.author.tag, message.author.avatarURL() || message.author.defaultAvatarURL));
 }
@@ -278,7 +278,7 @@ async function processEmoji(client: Assistant, args: string[]): Promise<Embed> {
         }).join('\n');
 
         return new Embed({
-            color: 'help',
+            color: EmbedColor.Help,
             description
         });
     }
@@ -299,7 +299,7 @@ async function processEmoji(client: Assistant, args: string[]): Promise<Embed> {
     const clEmoji = guild && guild.emojis.cache.find(e => e.name === emoji);
 
     return new Embed({
-        color: 'help',
+        color: EmbedColor.Help,
         description: `Коду "${code}" было выставлено эмодзи ${clEmoji || `:${emoji}:`} \`:${emoji}:\``
     });
 }
@@ -321,7 +321,7 @@ async function getOrder(orderID: string, property: keyof Order): Promise<Embed |
 
 async function updateStore(client: Assistant, message: AssistantMessage): Promise<false> {
     const msg = await message.channel.send(new Embed({
-        color: 'help',
+        color: EmbedColor.Help,
         description: 'Запускаю обновление магазина...'
     }));
 
@@ -362,7 +362,7 @@ async function changeSettings(args: string[]): Promise<Embed> {
         });
 
         return new Embed({
-            color: 'help',
+            color: EmbedColor.Help,
             description: 'Доступные настройки',
             fields
         });
@@ -378,7 +378,7 @@ async function changeSettings(args: string[]): Promise<Embed> {
     await store.set('conf', value, setting);
 
     return new Embed({
-        color: 'help',
+        color: EmbedColor.Help,
         description: `Настройке "${setting}" выставлено значение ${value}.`
     });
 }
@@ -563,7 +563,7 @@ async function getProducts(
 
     if(data.length > 1) {
         const embed = new Embed({
-            color: 'help',
+            color: EmbedColor.Help,
             title: `По вашему запросу нашлось ${data.length.pluralize(['совпадение', 'совпадения', 'совпадений'], 'ru')}`,
             description: 'Введите цифру, под которым обозначен предмет.\n' +
                 data.map(({ ru, en }: { ru: string; en: string }, i: number) => `• ${i + 1}. ${ru}${ru !== en ? ` (${en})` : ''}`).join('\n')
@@ -722,7 +722,7 @@ async function run(
 
     const embed = new Embed({
         title: 'Подтверждение заказа',
-        color: 'help',
+        color: EmbedColor.Help,
         description: CONFIRM.render({ ...order }),
         image: products.length === 1 ? (products[0].image || null) : null
     }).setFooter(`Покупатель: ${user}`, message.author.avatarURL() || message.author.defaultAvatarURL);
@@ -748,7 +748,7 @@ async function run(
 
     const managerMessage = new Embed({
         title: `${message.author.tag} делает заказ`,
-        color: 'help',
+        color: EmbedColor.Help,
         description: ORDER_DESCRIPTION.render(order),
     })
         .setFooter(`Покупатель: ${user}`, message.author.avatarURL() || message.author.defaultAvatarURL);
@@ -766,7 +766,7 @@ async function run(
         const ORDER_CONFIRMED = await store.get('messages', 'order_confirmed');
 
         await message.author.send(new Embed({
-            color: 'help',
+            color: EmbedColor.Help,
             description: ORDER_CONFIRMED.render({ ...order, orderID: orderMessage.id })
         }));
     } catch(err) {

@@ -1,5 +1,5 @@
 import { Settings } from '../modules/subscriptions';
-import { Embed } from '../helpers/embed';
+import { Embed, EmbedColor, EmbedMedia } from '../helpers/embed';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { RequestInfo, language } from '../types';
 
@@ -84,8 +84,8 @@ function embed({ translations, data }: RequestInfo, settings: Settings): Embed {
     return new Embed({
         title: utils.translate(title, language).render({ date: tz_date }),
         description: description + `\n_* — ${utils.translate(can_sell, language).toLowerCase()}_`,
-        color: 'golden',
-        image: 'golden',
+        color: EmbedColor.Golden,
+        image: EmbedMedia.Golden,
         footer: utils.translate(provided, language),
         url: link
     });

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { Embed } from '../helpers/embed';
+import { Embed, EmbedColor } from '../helpers/embed';
 import { translate } from './utils';
 import { Item } from '../types';
 
@@ -24,7 +24,7 @@ function embed({ data }: { data: DataSubscriptions | DataCommand }, lang: string
     return new Embed({
         title: translate(title, lang),
         description: translate(description, lang),
-        color: 'patch',
+        color: EmbedColor.Patch,
         image,
         url: translate(link, lang)
     });

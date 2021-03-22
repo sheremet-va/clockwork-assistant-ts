@@ -1,5 +1,7 @@
+// TODO reanimate
+
 import { Settings } from '../modules/subscriptions';
-import { Embed } from './embed';
+import { Embed, EmbedColor, EmbedMedia } from './embed';
 
 import * as trials from './pledges';
 
@@ -35,8 +37,8 @@ function buildEmbed(
     return new Embed({
         title: translate(title, language),
         url: 'https://esoleaderboards.com/trial/weekly',
-        color: 'weekly',
-        thumbnail: 'weekly',
+        color: EmbedColor.Weekly,
+        thumbnail: EmbedMedia.Weekly,
         fields,
         footer: translate(provided, language),
     });

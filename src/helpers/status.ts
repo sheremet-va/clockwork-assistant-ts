@@ -239,7 +239,7 @@ async function embed(
 
     const embed = {
         author: title,
-        color: down ? 'error' : 'success' as EmbedColor
+        color: down ? EmbedColor.Error : EmbedColor.Success
     };
 
     if (fields.length > 1) {

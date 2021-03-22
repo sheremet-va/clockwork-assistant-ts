@@ -1,6 +1,6 @@
 import { RequestInfo, Item } from '../types';
 
-import { Embed } from '../helpers/embed';
+import { Embed, EmbedColor } from '../helpers/embed';
 import { translate } from '../helpers/translate';
 import { Settings } from '../modules/subscriptions';
 
@@ -48,7 +48,7 @@ function embedMany({ translations, data }: RequestInfo): Embed {
 
     return new Embed({
         title: title_closest,
-        color: 'drops',
+        color: EmbedColor.Drops,
         fields: [
             ...fields,
             { name: notice_title, value: notice_description, inline: false }
@@ -110,7 +110,7 @@ async function embedOne(
     ];
 
     return new Embed({
-        color: 'drops',
+        color: EmbedColor.Drops,
         fields,
         title,
         image,

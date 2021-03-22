@@ -4,7 +4,7 @@ import { Message } from 'discord.js';
 
 import { Configuration, AssistantMessage, RequestInfo } from '../types';
 
-import { Embed } from '../helpers/embed';
+import { Embed, EmbedColor, EmbedMedia } from '../helpers/embed';
 import { entries } from '../helpers/utils';
 
 import { version, author } from '../../package.json';
@@ -47,8 +47,8 @@ async function run(
     const prefix = client.getPrefix(id);
 
     const embed = new Embed({
-        color: 'help',
-        thumbnail: 'icon'
+        color: EmbedColor.Help,
+        thumbnail: EmbedMedia.Icon
     });
 
     if(command) {
@@ -82,6 +82,7 @@ async function run(
             return cmd?.conf.enabled && cmd.conf.helpShown && (channel.type === 'text' || !cmd.conf.guildOnly);
         })
         .reduce((result, cmd) => {
+            // TODO lang
             const category = cmd.category || 'Основная';
 
             return {

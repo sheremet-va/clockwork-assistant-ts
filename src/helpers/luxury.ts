@@ -1,5 +1,5 @@
 import { Settings } from '../modules/subscriptions';
-import { Embed } from '../helpers/embed';
+import { Embed, EmbedColor } from '../helpers/embed';
 import { RequestInfo, language } from '../types';
 
 import moment from 'moment-timezone';
@@ -72,7 +72,7 @@ function embed({ translations, data }: RequestInfo, settings: Settings): Embed {
         {
             title: (title[language] || title).render({ date: tz_date }),
             description,
-            color: 'luxury',
+            color: EmbedColor.Luxury,
             footer: provided[language] || provided,
             image,
             url: link
