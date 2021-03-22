@@ -1,12 +1,10 @@
 import { ErrorEmbed, ClientError } from './error';
-import { Client, Collection, TextChannel, DMChannel } from 'discord.js';
+import { Client, Collection, TextChannel, DMChannel, NewsChannel, Message } from 'discord.js';
 import { promisify } from 'util';
 
-import { AssistantMessage as Message, RequestInfo, AssistantMessage } from '../types';
+import { AssistantMessage, RequestInfo } from '../types';
 
-import Enmap from 'enmap';
-
-import { config } from '../config';
+import { config, Config } from '../config';
 import { Logger } from './logger';
 
 import axios, { AxiosRequestConfig } from 'axios';
@@ -15,11 +13,11 @@ import { Embed } from '../helpers/embed';
 
 import { clean } from '../helpers/utils';
 
+import { getPrefix } from './prefixes';
+
 const LIMIT_REPEAT_GET = 3;
 
-const prefixes = new Enmap<string, string>('prefixes');
-
-function build(logger: Logger): void {
+function defineGlobals(logger: Logger): void {
     Object.defineProperty(String.prototype, 'capitalize', {
         value() {
             if (!this || this === '') return '';
@@ -109,13 +107,11 @@ interface Command {
 }
 
 class AssistantBase extends Client {
-    config: config;
+    config: Config;
     logger: Logger;
 
     commands: Collection<string, Command>; // string, Command
     aliases: Collection<string, string>;
-
-    prefixes: Enmap<string, string>; // TODO type
 
     levelCache!: { [k: string]: number };
 
@@ -130,14 +126,12 @@ class AssistantBase extends Client {
         this.commands = new Collection();
         this.aliases = new Collection();
 
-        this.prefixes = prefixes;
-
         this.wait = promisify(setTimeout);
 
-        build(this.logger);
+        defineGlobals(this.logger);
     }
 
-    permlevel = (message: Message): number => {
+    permlevel = (message: AssistantMessage): number => {
         let permlvl = 0;
 
         const permOrder = this.config.permLevels.slice(0).sort((p, c) => p.level < c.level ? 1 : -1);
@@ -213,7 +207,7 @@ class AssistantBase extends Client {
         }
     };
 
-    getUser = async (ownerId: string): Promise<{
+    getClockworkUser = async (ownerId: string): Promise<{
         settings: Settings & { prefix: string }; //TODO
         subscriptions: Record<string, string[]>;
         languages: string[];
@@ -229,27 +223,23 @@ class AssistantBase extends Client {
             }
         } = await this.request('/user?id=' + ownerId, null, '1.0');
 
+        // TODO проверить что возвращает settings, нужен тут такой defaults?
         return { settings: { ...defaults, ...settings }, subscriptions, languages };
     };
 
     getPrefix = (ownerId: string): string => {
-        const prefixes = this.prefixes;
-        const prefix = this.config.defaultSettings.prefix;
+        const defaultPrefix = this.config.defaultSettings.prefix;
 
-        if (prefixes.has(ownerId)) {
-            return prefixes.get(ownerId) || prefix;
-        }
-
-        return prefix;
+        return getPrefix(ownerId) || defaultPrefix;
     };
 
     request = async (
         options: (AxiosRequestConfig & { cache?: boolean }) | string,
-        channel: TextChannel | DMChannel | null,
+        channel: TextChannel | DMChannel | NewsChannel | null,
         version: string,
         tries = 1
     ): Promise<RequestInfo> => {
-        const query = '&project=assistant&token=' + this.config.back;
+        const query = '&project=assistant&token=' + this.config.coreToken;
         const url = this.config.core + (typeof options === 'string' ? options : options.url) + query;
 
         const headers = { 'Accept-Version': version };
@@ -260,7 +250,7 @@ class AssistantBase extends Client {
             url
         };
 
-        const cleanUrl = decodeURI(settings.url.replace(this.config.back, 'TRUSTED'));
+        const cleanUrl = decodeURI(settings.url.replace(this.config.coreToken, 'TRUSTED'));
 
         if (tries > LIMIT_REPEAT_GET) {
             throw new ClientError(`Number of attempts to get "${cleanUrl}" exceeded`);
@@ -322,3 +312,4 @@ declare global {
 }
 
 export { AssistantBase as Assistant };
+export default Assistant;

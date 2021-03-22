@@ -1,9 +1,11 @@
 // Команда "ПРЕФИКС" позволяет изменять префикс бота в ЛС или на сервере.
 
-import { Embed } from '../helpers/embed';
+import { Embed, EmbedColor, Emoji } from '../helpers/embed';
 
 import { Message } from 'discord.js';
 import { AssistantMessage, RequestInfo } from '../types';
+
+import { setPrefix } from '../modules/prefixes';
 
 const run = async (
     client: Assistant,
@@ -16,11 +18,11 @@ const run = async (
 
     const { translations: { success } } = await client.request(path, channel, '1.0');
 
-    client.prefixes.set(id, prefix);
+    await setPrefix(id, prefix);
 
     const embed = new Embed({
-        color: 'success',
-        description: Embed.emojis.success + success.render({ prefix })
+        color: EmbedColor.Drops,
+        description: Emoji.Success + success.render({ prefix })
     });
 
     return channel.send(embed);

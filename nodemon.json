@@ -1,6 +1,7 @@
 {
     "watch": ["src"],
-    "ext": ".ts,.js",
-    "ignore": [],
-    "exec": "ts-node --files ./src/index.ts"
+    "ignore": ["src/**/*.test.ts"],
+    "ext": "ts,mjs,js,json,graphql",
+    "exec": "etsc && node ./dist/index.js",
+    "legacyWatch": true
 }

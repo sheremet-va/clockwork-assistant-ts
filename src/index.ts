@@ -1,5 +1,3 @@
-// Based on https://github.com/AnIdiotsGuide/guidebot
-
 import { Assistant } from './modules/assistant';
 import { get as getCommands } from './modules/commands';
 
@@ -11,15 +9,12 @@ import { notUndefined } from './helpers/utils';
 
 import * as Subscriptions from './services/subscriptions';
 
-import heapdump from 'heapdump';
-
-const readdir = promisify(readSync);
-
 // Seth listening
 import * as Seht from './services/seth';
 
+const readdir = promisify(readSync);
+
 const names = [
-    'logs',
     'configs'
 ];
 
@@ -99,12 +94,6 @@ const init = async (): Promise<void> => {
     client.login(client.config.token);
 
     Seht.init(client);
-
-    const HEAT_INTERVAL_2_DAYS = 1000 * 60 * 60 * 24 * 2;
-
-    setInterval(() => {
-        heapdump.writeSnapshot();
-    }, HEAT_INTERVAL_2_DAYS);
 };
 
 init().catch(console.error);

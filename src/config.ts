@@ -1,10 +1,12 @@
-import { id as token, back, dealers } from './configs.json';
+// TODO пробрасывать через process.env
+
+import { token, coreToken, dealers } from './configs.json';
 import { PermissionString } from 'discord.js';
 
-import { AssistantMessage as Message } from './types';
+import { AssistantMessage } from './types';
 
 function checkPermission(name: PermissionString) {
-    return (message: Message): boolean => {
+    return (message: AssistantMessage): boolean => {
         if (!message.guild) {
             return true;
         }
@@ -23,13 +25,13 @@ function checkPermission(name: PermissionString) {
     };
 }
 
-const config: config = {
+const config: Config = {
     core: 'http://localhost:3006',
     ownerID: '215358861647806464',
     support: [],
     admins: [],
     token,
-    back,
+    coreToken,
 
     supportChannel: '752154861818085490',
 
@@ -74,7 +76,7 @@ const config: config = {
         {
             level: 4,
             name: 'Server Owner',
-            check: (message: Message): boolean => {
+            check: (message: AssistantMessage): boolean => {
                 if (message.channel.type !== 'text') {
                     return false;
                 }
@@ -86,32 +88,32 @@ const config: config = {
         {
             level: 8,
             name: 'Bot Support',
-            check: (message: Message): boolean => config.support.includes(message.author.id)
+            check: (message: AssistantMessage): boolean => config.support.includes(message.author.id)
         },
 
         {
             level: 9,
             name: 'Bot Admin',
-            check: (message: Message): boolean => config.admins.includes(message.author.id)
+            check: (message: AssistantMessage): boolean => config.admins.includes(message.author.id)
         },
 
         {
             level: 10,
             name: 'Bot Owner',
-            check: (message: Message): boolean => message.client.config.ownerID === message.author.id
+            check: (message: AssistantMessage): boolean => message.client.config.ownerID === message.author.id
         }
     ]
 };
 
-type config = {
+type Config = {
     core: string;
     ownerID: string;
     support: string[];
     admins: string[];
     token: string;
-    back: string;
+    coreToken: string;
     defaultSettings: { prefix: string };
-    permLevels: { level: number; name: string; check: (m: Message) => boolean; guildOnly?: boolean }[];
+    permLevels: { level: number; name: string; check: (m: AssistantMessage) => boolean; guildOnly?: boolean }[];
     dealers: {
         managerChannelID: string;
         ordersDoneChannelID: string;
@@ -121,4 +123,4 @@ type config = {
     supportChannel: string;
 };
 
-export { config };
+export { config, Config };

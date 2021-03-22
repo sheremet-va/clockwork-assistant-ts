@@ -4,8 +4,8 @@ import { TextChannel, Message, BitFieldResolvable, PermissionString } from 'disc
 
 import { AssistantMessage } from '../types';
 import { ErrorEmbed } from '../modules/error';
-import { store } from '../modules/store';
-import { Embed } from '../helpers/embed';
+import { store } from '../sellers/store';
+import { Embed, EmbedColor } from '../helpers/embed';
 
 async function checkPermissions(client: Assistant, message: AssistantMessage): Promise<boolean> {
     const channel = message.channel as TextChannel;
@@ -88,7 +88,7 @@ async function confirmOrder(client: Assistant, message: AssistantMessage) {
         const MESSAGE_SENT_GOLD = await store.get('messages', 'user_sent_gold');
 
         await seller.send(new Embed({
-            color: 'help',
+            color: EmbedColor.Help,
             url,
             title: `Золото по заказу ${orderID} отправлено`,
             description: MESSAGE_SENT_GOLD.render(order)
@@ -99,7 +99,7 @@ async function confirmOrder(client: Assistant, message: AssistantMessage) {
         const MESSAGE_USER_SENT_GOLD_RESPONSE = await store.get('messages', 'user_sent_gold_response');
 
         await message.author.send(new Embed({
-            color: 'help',
+            color: EmbedColor.Help,
             description: MESSAGE_USER_SENT_GOLD_RESPONSE.render(order)
         }).setFooter(`Менеджер @${seller.tag}. Заказ: ${orderID}`, seller.avatarURL() || seller.defaultAvatarURL));
     } catch(err) {
@@ -177,7 +177,7 @@ async function event(
     if (!cmd) return;
 
     // TODO CACHE, remove cache on certain commands
-    const user = await client.getUser(message.ownerId);
+    const user = await client.getClockworkUser(message.ownerId);
 
     message.settings = user.settings;
     message.subs = user.subscriptions;

@@ -1,25 +1,24 @@
-import { Embed } from '../helpers/embed';
+import { Embed, EmbedColor, Emoji } from '../helpers/embed';
 
-import { TextChannel, DMChannel } from 'discord.js';
+import { TextChannel, DMChannel, NewsChannel } from 'discord.js';
 import { AssistantUser } from '../types';
 
 class ErrorEmbed extends Embed {
     constructor(message: string) {
         super({
-            color: 'error',
-            description: Embed.emojis.error + message
+            color: EmbedColor.Error,
+            description: Emoji.Error + message
         });
     }
 }
 
 class ClientError extends Error {
-    result = 'error';
-    name = 'ClientError';
+    public name = 'ClientError';
 
     constructor(
         public description: string,
         public message: string = '',
-        public channel: TextChannel | DMChannel | AssistantUser | null = null
+        public channel: TextChannel | DMChannel | NewsChannel | AssistantUser | null = null
     ) {
         super(message);
     }

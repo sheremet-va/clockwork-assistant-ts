@@ -5,7 +5,7 @@ import { promisify } from 'util';
 import moment from 'moment';
 
 import * as fs from 'fs';
-import * as Path from 'path';
+import { getPath } from './path';
 
 const appendFile = promisify(fs.appendFile);
 const writeFile = promisify(fs.writeFile);
@@ -17,21 +17,28 @@ const colors = {
     req: 0xB2D5FF
 };
 
+const ID_USER_TEST = '545503135200968708';
+const ID_CHANNEL_LOGS = '585174236398616577';
+
 export class Logger {
-    constructor(private client: Assistant) {}
+    constructor(
+        private client: Assistant
+    ) {}
 
     private async write(content: string, type: keyof typeof colors = 'log', cmdEmbed: MessageEmbed | null = null): Promise<void> {
-        const isTest = this.client.user ? this.client.user.id === '545503135200968708' : true;
-        const channel = this.client.channels.cache.get('585174236398616577') as TextChannel;
+        const isTest = this.client.user ? this.client.user.id === ID_USER_TEST : true;
+        const channel = this.client.channels.cache.get(ID_CHANNEL_LOGS) as TextChannel;
 
-        const timestamp = `[${moment().format('YYYY-MM-DD HH:mm:ss')}]:`;
+        const time = moment();
+
+        const timestamp = `[${time.format('YYYY-MM-DD HH:mm:ss')}]:`;
         const message = `${timestamp} (${type.toUpperCase()}) ${content}`;
 
         console.log(message);
 
         if(type === 'log') {
-            const day = `${moment().format('YYYY-MM-DD')}`;
-            const path = Path.resolve(__dirname, `../logs/${day}-logs.txt`);
+            const day = `${time.format('YYYY-MM-DD')}`;
+            const path = getPath('logs', `${day}-logs.txt`);
 
             try {
                 await appendFile(path, message + '\n');

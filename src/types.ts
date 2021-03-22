@@ -1,21 +1,21 @@
 import { Message, User } from 'discord.js';
 import { Settings } from './modules/subscriptions';
 
-export class AssistantUser extends User {
-    permLevel!: number;
-    permLevelName!: string;
+export interface AssistantUser extends User {
+    permLevel: number;
+    permLevelName: string;
 }
 
-export class AssistantMessage extends Message {
-    client!: Assistant;
-    name!: string;
-    settings!: Settings & { prefix: string };
-    subs: any;
-    languages: any;
-    author!: AssistantUser;
-    args!: string[];
-    command!: string;
-    ownerId!: string;
+export interface AssistantMessage extends Message {
+    client: Assistant;
+    name: string;
+    settings: Settings & { prefix: string };
+    subs: Record<string, string[]>;
+    languages: string[];
+    author: AssistantUser;
+    args: string[];
+    command: string;
+    ownerId: string;
 }
 
 export declare interface RequestInfo {

@@ -1,4 +1,4 @@
-import { Embed, Color } from '../helpers/embed';
+import { Embed, EmbedColor } from '../helpers/embed';
 
 import moment from 'moment';
 
@@ -239,7 +239,7 @@ async function embed(
 
     const embed = {
         author: title,
-        color: down ? 'error' : 'success' as Color
+        color: down ? 'error' : 'success' as EmbedColor
     };
 
     if (fields.length > 1) {
