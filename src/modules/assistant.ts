@@ -122,7 +122,11 @@ class AssistantBase extends Client {
     wait: (seconds: number) => Promise<void>;
 
     constructor() {
-        super();
+        super({
+            messageCacheMaxSize: 1,
+            messageCacheLifetime: 1,
+            messageSweepInterval: 1
+        });
 
         this.config = config;
         this.logger = new Logger(this);
