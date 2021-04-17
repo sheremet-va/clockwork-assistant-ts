@@ -10,6 +10,6 @@ export default class extends Subscriptions {
     }
 
     async notify(): Promise<void> {
-        this.send(settings => patch.embed(this, settings.language));
+        return this.send(settings => patch.embed(this, settings.language));
     }
 }

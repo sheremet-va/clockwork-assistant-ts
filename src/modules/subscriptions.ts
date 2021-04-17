@@ -118,38 +118,75 @@ class Subscriptions {
 
     // notify(): Promise<void> | void {}
 
-    send(builder: (settings: Settings, id: string) => Embed): void {
-        const success = this.guilds.reduce((total, { channels, guild, settings }) => {
+    async send(builder: (settings: Settings, id: string) => Embed): Promise<void> {
+        const CHUNK_SIZE = 5;
+
+        const messages: { channel: TextChannel; message: Embed }[][] = [[]]; // [[{ channel, message }]]
+
+        this.guilds.forEach(({ channels, guild, settings }) => {
             const message = builder(settings, guild.id);
 
             if (!message) {
                 this.client.logger.error('SubscriptionsError', `No message for ${this.name} (${guild.id}).`);
-
-                return total;
+                return;
             }
 
             const { footer, name } = this.translations;
 
             const subName = `[${name[settings.language]}]`;
 
-            if(!message.footer?.text || message.footer?.text && !message.footer.text.includes(subName)) {
+            if(!message.footer?.text || !message.footer.text.includes(subName)) {
                 message.setFooter(`${message.footer?.text || footer[settings.language]} ${subName}`);
             }
 
             const allowed = channels
                 .filter(channel => this.filter(channel, settings), this)
-                .map(async ({ channel }) => {
-                    // дописать
-                    channel.send(message)
-                        .catch(err => {
-                            this.client.logger.error('SubscriptionsError', `${channel.name} (guildID: ${guild.id}): ` + err);
-                        });
-                });
+                .map(({ channel }) => ({ channel, message }));
 
-            return total + allowed.length;
-        }, 0);
+            const last = messages[messages.length - 1];
 
-        this.client.logger.log(`[${this.name}] Message was successfully sent to ${success} channels.`);
+            if(last.length < CHUNK_SIZE) {
+                last.push(...allowed);
+            } else {
+                messages.push([...allowed]);
+            }
+        });
+
+        type ErrorResult = {
+            err: any;
+            channel: TextChannel;
+        }
+
+        const result = {
+            success: 0,
+            errors: [] as ErrorResult[]
+        };
+
+        for(let i = 0; i < messages.length; i++) {
+            const chunk = messages[i];
+
+            const promises = chunk.map(({ channel, message }) => channel.send(message));
+
+            const chunkResult = (await Promise.allSettled(promises)).reduce((acc, result, i) => {
+                if(result.status === 'fulfilled') {
+                    acc.success++;
+                    return acc;
+                }
+
+                acc.errors.push({ err: result.reason, channel: chunk[i].channel });
+
+                return acc;
+            }, { success: 0, errors: [] as ErrorResult[] });
+
+            result.success += chunkResult.success;
+            result.errors.push(...chunkResult.errors);
+        }
+
+        this.client.logger.log(`[${this.name}] Message was successfully sent to ${result.success} channels.`);
+
+        result.errors.forEach(({ err, channel }) => {
+            this.client.logger.error('SubscriptionsError', `${channel.name} (guildID: ${channel.guild.id}): ` + err)
+        });
     }
 
     filter({ channel, id, guild }: GuildChannel, settings: Settings): boolean {

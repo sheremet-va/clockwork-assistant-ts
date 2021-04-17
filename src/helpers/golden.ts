@@ -54,7 +54,7 @@ function build(
 
                 const isActialTraits = !names.includes(traits);
 
-                return `${canSellString}${strong}${title}${strong}${isActialTraits ? `(${traits})` : ''}`;
+                return `${canSellString}${strong}${title}${strong}${isActialTraits ? ` (${traits})` : ''}`;
             }).join('\n');
 
         const cost = price.gold > 0 && price.ap > 0 ? [

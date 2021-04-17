@@ -34,7 +34,7 @@ export default class extends Subscriptions implements Subscription {
 
         await Promise.allSettled(promises);
 
-        this.send((settings: Settings) => {
+        return this.send((settings: Settings) => {
             const key = this.getKey(time, settings);
 
             return CACHE[key];

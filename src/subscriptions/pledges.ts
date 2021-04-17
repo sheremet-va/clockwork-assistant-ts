@@ -17,7 +17,7 @@ export default class extends Subscriptions {
         const { today: string_today } = this.translations;
         const { today, tomorrow } = this.data;
 
-        this.send((settings: Settings) => {
+        return this.send((settings: Settings) => {
             const embed = new Embed({
                 author: string_today[settings.language],
                 thumbnail: 'undaunted'

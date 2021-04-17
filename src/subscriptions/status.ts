@@ -22,7 +22,7 @@ export default class extends Subscriptions {
             .then(result => result.reduce((total, { id, embed }) =>
                 ({ ...total, [id]: embed }), {})) as Record<string, Embed>;
 
-        this.send((_: Settings, id: string) => embeds[id]);
+        return this.send((_: Settings, id: string) => embeds[id]);
     }
 
     static get names(): string[] {

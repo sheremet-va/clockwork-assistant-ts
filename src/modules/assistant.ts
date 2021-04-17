@@ -125,7 +125,8 @@ class AssistantBase extends Client {
         super({
             messageCacheMaxSize: 1,
             messageCacheLifetime: 1,
-            messageSweepInterval: 1
+            messageSweepInterval: 1,
+            retryLimit: 5
         });
 
         this.config = config;

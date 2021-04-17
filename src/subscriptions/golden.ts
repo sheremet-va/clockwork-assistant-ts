@@ -8,6 +8,6 @@ export default class extends Subscriptions {
     }
 
     async notify(): Promise<void> {
-        this.send((settings: Settings) => golden.embed(this, settings));
+        return this.send((settings: Settings) => golden.embed(this, settings));
     }
 }
