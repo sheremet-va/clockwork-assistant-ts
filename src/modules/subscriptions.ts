@@ -119,7 +119,7 @@ class Subscriptions {
     // notify(): Promise<void> | void {}
 
     async send(builder: (settings: Settings, id: string) => Embed): Promise<void> {
-        const CHUNK_SIZE = 5;
+        const CHUNK_SIZE = 10;
 
         const messages: { channel: TextChannel; message: Embed }[][] = [[]]; // [[{ channel, message }]]
 
@@ -162,7 +162,9 @@ class Subscriptions {
             errors: [] as ErrorResult[]
         };
 
-        for(let i = 0; i < messages.length; i++) {
+        const length = messages.length;
+
+        for(let i = 0; i < length; i++) {
             const chunk = messages[i];
 
             const promises = chunk.map(({ channel, message }) => channel.send(message));
@@ -177,6 +179,8 @@ class Subscriptions {
 
                 return acc;
             }, { success: 0, errors: [] as ErrorResult[] });
+
+            this.client.logger.log(`[${this.name}] Chunk ${i} out of ${length} sent.`)
 
             result.success += chunkResult.success;
             result.errors.push(...chunkResult.errors);
