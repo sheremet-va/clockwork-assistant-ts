@@ -28,6 +28,8 @@ type ApiResponse = {
         usage: string;
         aliases: string;
         title_description: string;
+        help_server: string;
+        join_server: string;
     };
     data: Command[];
 }
@@ -100,12 +102,18 @@ async function run(
 
     const addLink = `[${translations.click}](https://discordapp.com/api/oauth2/authorize?client_id=543021755841642506&permissions=486464&scope=bot)`;
 
+    const INVITE_TO_HELPER_SERVER_LINK = 'https://discord.gg/BSSD84AWme';
+
     embed
         .setTitle('Clockwork Assistant')
         .setDescription(`**Clockwork Assistant ${version}** (by ${author}). ` + translations.description.render({ prefix }))
         .addFields([
             ...fields,
-            { name: translations.add_bot, value: addLink }
+            { name: translations.add_bot, value: addLink },
+            { 
+                name: translations.help_server, 
+                value: `[${translations.join_server}](${INVITE_TO_HELPER_SERVER_LINK})`
+            }
         ]);
 
     return channel.send(embed);
