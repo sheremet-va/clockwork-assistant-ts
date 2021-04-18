@@ -99,9 +99,9 @@ async function post(
 
     handle(client, subscriptions);
 
-    await subscriptions.notify();
+    subscriptions.notify();
 
-    return { status: 'success' };
+    return { status: 'started' };
 }
 
 function init(
