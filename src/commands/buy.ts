@@ -678,8 +678,8 @@ async function run(
 
     const products = [];
 
-    const plusSplited = possibleName.split('+');
-    const nlSplited = possibleName.split('\n');
+    const plusSplited = possibleName.split('+').filter(Boolean);
+    const nlSplited = possibleName.split('\n').filter(Boolean);
 
     const items = plusSplited.length > nlSplited.length ? plusSplited : nlSplited;
 
